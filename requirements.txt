@@ -1,0 +1,9 @@
+base45
+cbor2
+colorama
+Pillow
+pyasn1
+pyOpenSSL
+pyzbar
+requests
+termcolor

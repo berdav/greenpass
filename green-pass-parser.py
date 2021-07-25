@@ -1,0 +1,492 @@
+#!/usr/bin/env python3
+
+# Green Pass Parser
+# Copyright (C) 2021  Davide Berardi -- <berardi.dav@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+import io
+import sys
+import zlib
+import fitz
+import json
+import cbor2
+import base45
+import base64
+import argparse
+import requests
+import colorama
+from PIL import Image
+from pyzbar import pyzbar
+from OpenSSL import crypto
+from binascii import hexlify
+from datetime import datetime
+from cose.keys import EC2Key, CoseKey
+from cose.messages import CoseMessage
+
+# Colored output
+color = False
+# Settings output
+settings = False
+# QR Code file
+qrfile = None
+# Read text file from stdin
+txt = None
+# PDF File
+pdffile = None
+# Base url to retrieve data
+BASE_URL = "https://get.dgc.gov.it/v1/dgc/"
+
+# Manufacturer names
+class VaccineManufacturer(object):
+    def __init__(self, t):
+        self.t = t
+        self.pretty_name = {
+            "ORG-100001699": "AstraZeneca",
+            "ORG-100030215": "Biontech",
+            "ORG-100001417": "Janssen",
+            "ORG-100031184": "Moderna",
+            "ORG-100006270": "Curevac",
+            "ORG-100013793": "CanSino",
+            "ORG-100020693": "Sinopharm",
+            "ORG-100010771": "Sinopharm",
+            "ORG-100024420": "Sinopharm",
+            "ORG-100032020": "Novavax"
+        }
+    def get_pretty_name(self):
+        return self.pretty_name.get(self.t, self.t)
+
+# Vaccine names
+class Vaccine(object):
+    def __init__(self, t):
+        self.t = t
+        self.pretty_name = {
+            "EU/1/20/1507": "Moderna",
+            "EU/1/20/1525": "Janssen",
+            "EU/1/20/1528": "Pfizer",
+            "EU/1/21/1529": "AstraZeneca",
+            "EU/1/XX/XXX1": "Sputnik-V",
+            "EU/1/XX/XXX2": "CVnCoV",
+            "EU/1/XX/XXX3": "EpiVacCorona",
+            "EU/1/XX/XXX4": "BBIBP-CorV",
+            "EU/1/XX/XXX5": "CoronaVac",
+        }
+    def get_pretty_name(self):
+        return self.pretty_name.get(self.t, self.t)
+
+# Disease names
+class Disease(object):
+    def __init__(self, t):
+        self.t = t
+        self.pretty_name = {
+            "840539006": "Covid19"
+        }
+    def get_pretty_name(self):
+        return self.pretty_name.get(self.t, self.t)
+
+# Retrieve settings from unified API endpoint
+class SettingsManager(object):
+    def __init__(self):
+        r = requests.get("{}/settings".format(BASE_URL))
+        if r.status_code!=200:
+            print("[-] Error from API")
+            sys.exit(1)
+
+        self.vaccines = {}
+        self.recovery = {}
+        self.test    = {
+            "molecular": {},
+            "rapid": {}
+        }
+
+        settings = json.loads(r.text)
+        # Dispatch and create the dicts
+        for el in settings:
+            if "vaccine" in el["name"]:
+                if self.vaccines.get(el["type"], None) == None:
+                    self.vaccines[el["type"]] = {
+                        "complete": {
+                            "start_day": -1,
+                            "end_day": -1
+                        },
+                        "not_complete": {
+                            "start_day": -1,
+                            "end_day": -1
+                        }
+                    }
+                if "not_complete" in el["name"]:
+                    vtype = "not_complete"
+                elif "complete" in el["name"]:
+                    vtype = "complete"
+
+                if "start_day" in el["name"]:
+                    daytype = "start_day"
+                elif "end_day" in el["name"]:
+                    daytype = "end_day"
+
+                self.vaccines[el["type"]][vtype][daytype] = int(el["value"])
+
+            elif "recovery" in el["name"]:
+                if "start_day" in el["name"]:
+                    self.recovery["start_day"] = int(el["value"])
+                elif "end_day" in el["name"]:
+                    self.recovery["end_day"] = int(el["value"])
+
+            elif "test" in el["name"]:
+                if "molecular" in el["name"]:
+                    ttype = "molecular"
+                elif "rapid" in el["name"]:
+                    ttype = "rapid"
+
+                if "start_hours" in el["name"]:
+                    hourtype = "start_hours"
+                elif "end_hours" in el["name"]:
+                    hourtype = "end_hours"
+
+                self.test[ttype][hourtype] = int(el["value"])
+            elif "ios" == el["name"] or "android" == el["name"]:
+                # Ignore app specific options
+                pass
+            else:
+                print("[~] Unknown field {}".format(el["name"]))
+
+    # Return the time that a vaccine is still valid, negative
+    # time if expired
+    def get_vaccine_remaining_time(self, vaccination_date, vtype, full):
+        if full:
+            selector = "complete"
+        else:
+            selector = "not_complete"
+
+        days = self.vaccines.get(vtype, { "complete": 0, "not_complete": 0})[selector]
+
+        try:
+            seconds_since_vaccine = (datetime.now() - vaccination_date).total_seconds()
+            hours_since_vaccine = seconds_since_vaccine / (60 * 60)
+        except:
+            return 0,0
+
+        if days.get("start_day", None) != None:
+            # Vaccine or day based certification
+            valid_start = (hours_since_vaccine - days["start_day"] * 24)
+            valid_end   = (days["end_day"] * 24 - hours_since_vaccine)
+        else:
+            # Test or hour based certification
+            valid_start = (hours_since_vaccine - days["start_hours"])
+            valid_end   = (days["end_hours"] - hours_since_vaccine)
+
+        return int(valid_start), int(valid_end)
+
+# Update certificate signer
+class CertificateUpdater(object):
+    def __init__(self):
+        pass
+
+    # Get KEY index from online status page
+    def get_kid_idx(self, kid):
+        r = requests.get("{}/signercertificate/status".format(BASE_URL))
+        if r.status_code != 200:
+            print("[-] Error from API")
+            sys.exit(1)
+        i = 0
+        hexkid = hexlify(kid)
+        for x in json.loads(r.text):
+            if hexlify(base64.b64decode(x)) == hexkid:
+                return i
+            i += 1
+        return -1
+
+    # Retrieve key from remote repository
+    def get_key(self, kid):
+        idx = self.get_kid_idx(kid)
+        headers = { "x-resume-token": str(idx) }
+        r = requests.get("{}/signercertificate/update".format(BASE_URL), headers=headers)
+        if r.status_code != 200:
+            print("[-] Error from API")
+            sys.exit(1)
+
+        certificate = base64.b64decode(r.text)
+
+        # Load certificate and dump the pubkey
+        x509 = crypto.load_certificate(crypto.FILETYPE_ASN1, certificate)
+        pubkey = crypto.dump_publickey(crypto.FILETYPE_ASN1, x509.get_pubkey())[26::]
+
+        # X is the first 32 bits, Y are the remaining ones
+        x = pubkey[1:int(len(pubkey)/2) + 1]
+        y = pubkey[int(len(pubkey)/2) + 1::]
+
+        # Create COSE key
+        kattr = {
+                "KTY":   "EC2",
+                "CURVE": "P_256",
+                "ALG":   "ES256",
+                "X":     x,
+                "Y":     y
+        }
+        return CoseKey.from_dict(kattr)
+
+# Parse a green pass file
+class GreenPassParser(object):
+    def __init__(self, path, filetype="png"):
+        if filetype == "txt":
+            if path == "-":
+                outdata = bytes(sys.stdin.read().replace("\n", "").encode("ASCII"))
+            else:
+                with open(path, 'rb') as f:
+                    outdata = f.read()
+        else:
+            if filetype == "png":
+                img = Image.open(path)
+            elif filetype == "pdf":
+                # Convert PDF to JPG
+                pdf_file = fitz.open(path)
+                imagebytes = pdf_file.extractImage(6)["image"]
+                img = Image.open(io.BytesIO(imagebytes))
+            else:
+                print("[-] file format {} not recognized".format(filetype), file=sys.stderr)
+
+            decoded = pyzbar.decode(img)
+            if len(decoded) < 1:
+                print("[-] Value not found", file=sys.stderr)
+                sys.exit(1)
+            output = decoded[0]
+            if output.type != "QRCODE":
+                print("[-] Not a qrcode", file=sys.stderr)
+                sys.exit(1)
+
+            outdata = output.data
+
+        data = b":".join(outdata.split(b":")[1::])
+        decoded = base45.b45decode(data)
+        uncompressed = zlib.decompress(decoded)
+
+        self.cose = CoseMessage.decode(uncompressed)
+
+        self.kid = list(self.cose.phdr.items())[0][1]
+        payload = cbor2.loads(self.cose.payload)
+
+        self.qr_info = {
+            "Release Country": payload[1],
+            "Release Date":    int(payload[6]),
+            "Expiration Date": int(payload[4])
+        }
+
+        personal_data = payload[-260][1]
+        self.personal_info = {
+            "Version":       personal_data["ver"],
+            "Date of Birth": personal_data["dob"],
+            "First Name":    personal_data["nam"]["gn"],
+            "Family Name":   personal_data["nam"]["fn"],
+        }
+
+        self.certificate_info = []
+        for el in personal_data["v"]:
+            cert = {
+                "Certificate ID":         el["ci"],
+                "Dose number":            int(el["dn"]),
+                "Total doses":            int(el["sd"]),
+                "Vaccine Manufacturer":   el["ma"],
+                "Vaccine product number": el["mp"],
+                "Vaccine type":           el["vp"],
+                "Vaccination Date":       el["dt"],
+                "Vaccination Country":    el["co"],
+                "Target disease":         el["tg"],
+            }
+            self.certificate_info.append(cert)
+
+    # Get Key ID from the QRCode
+    def get_kid(self):
+        return self.kid
+
+    # Set the decryption key
+    def set_key(self, key):
+        self.cose.key = key
+
+    # Verify the code
+    def verify(self):
+        return self.cose.verify_signature()
+
+
+# Verify certificate
+def verify_certificate(path, filetype="png"):
+    gpp = GreenPassParser(path, filetype)
+    sm = SettingsManager()
+
+    for qr_info in gpp.qr_info.items():
+        if qr_info[0] == "Release Date" or qr_info[0] == "Expiration Date":
+            print("{:30s} {}".format(qr_info[0], datetime.fromtimestamp(qr_info[1])))
+        else:
+            print("{:30s} {}".format(qr_info[0], qr_info[1]))
+
+    for personal_info in gpp.personal_info.items():
+        print("{:30s} {}".format(personal_info[0], personal_info[1]))
+
+    for el in gpp.certificate_info:
+        dn = -1
+        sd = -1
+        vaccinedate = None
+        validity_done = False
+        expired = True
+        vaccine = None
+        doses_done = False
+        for cert_info in el.items():
+            if not doses_done and dn != -1 and sd != -1:
+                if dn == sd:
+                    print("  {:28s}".format("Doses"), colored("{}/{}".format(dn, sd), "green"))
+                elif dn < sd and dn != 0:
+                    print("  {:28s}".format("Doses"), colored("{}/{}".format(dn, sd), "yellow"))
+
+                doses_done = True
+
+            if not validity_done and doses_done and vaccinedate != None and vaccine != None:
+                color = "white"
+                hours_to_valid, remaining_hours = sm.get_vaccine_remaining_time(vaccinedate, vaccine, dn == sd)
+
+                if hours_to_valid < 0:
+                    color = "red"
+                    remaining_hours = "Not yet valid, {} hours to validity, {} days".format(
+                            hours_to_valid, int(hours_to_valid / 24)
+                    )
+                    expired = True
+                elif remaining_hours <= 0:
+                    color = "red"
+                    remaining_days = "Expired since {} hours, {} days".format(
+                            -remaining_hours,
+                            -int(remaining_hours / 24)
+                    )
+                    expired = True
+                elif remaining_hours * 24 < 14:
+                    color = "yellow"
+                    remaining_hours = "{} hours left ({} days)".format(remaining_hours, int(remaining_hours / 24))
+                    expired = False
+                else:
+                    color = "green"
+                    remaining_days = "{} hours left, {} days, ~ {} months".format(
+                        remaining_hours,
+                        int(remaining_hours / 24),
+                        round(remaining_hours / 24 / 30)
+                    )
+                    expired = False
+
+                print("  {:28s} {} ({})".format(
+                    "Vaccination Date", colored(vaccinedate, color), colored(remaining_days, color)
+                ))
+
+                validity_done = True
+
+            if cert_info[0] == "Dose number":
+                dn = cert_info[1]
+            elif cert_info[0] == "Total doses":
+                sd = cert_info[1]
+            elif cert_info[0] == "Vaccine product number":
+                vaccine = cert_info[1]
+                cout = colored(Vaccine(cert_info[1]).get_pretty_name(), "blue")
+                print("  {:28s} {}".format(cert_info[0], cout))
+            elif cert_info[0] == "Vaccination Date":
+                try:
+                    vaccinedate = datetime.strptime(cert_info[1], "%Y-%m-%d")
+                except:
+                    vaccinedate = 0
+            elif cert_info[0] == "Vaccine Manufacturer":
+                cout = colored(VaccineManufacturer(cert_info[1]).get_pretty_name(), "blue")
+                print("  {:28s} {}".format(cert_info[0], cout))
+            elif cert_info[0] == "Target disease":
+                cout = colored(Disease(cert_info[1]).get_pretty_name(), "blue")
+                print("  {:28s} {}".format(cert_info[0], cout))
+            else:
+                print("  {:28s} {}".format(cert_info[0], cert_info[1]))
+
+    cup = CertificateUpdater()
+    key = cup.get_key(gpp.get_kid())
+    gpp.set_key(key)
+    verified = gpp.verify()
+
+    if verified:
+        color = "green"
+    else:
+        color = "red"
+
+    print("{:30s} {}".format("Verified", colored(verified, color)))
+
+    valid = verified and not expired
+    # Unix return code is inverted
+    return 1 - valid
+
+def dump_settings():
+    sm = SettingsManager()
+
+    print("Testes")
+    for el in sm.test.items():
+        print("  {} not before: {:4d} hours   not after: {:4d} hours".format(
+            colored("{:25s}".format(el[0]), "blue"), el[1]["start_hours"], el[1]["end_hours"])
+        )
+    print()
+    print("Certifications")
+    print("  {} not before: {:4d} days    not after: {:4d} days".format(
+        colored("{:25s}".format("recovery"), "blue"), sm.recovery["start_day"], sm.recovery["end_day"])
+    )
+    print()
+
+    print("Vaccines")
+    for vac in sm.vaccines.items():
+        for el in vac[1].items():
+            print("  {} {} not before: {:4d} days    not after: {:4d} days".format(
+                colored("{:12s}".format(el[0]), "blue"),
+                colored("{:12s}".format(Vaccine(vac[0]).get_pretty_name()), "yellow"),
+                el[1]["start_day"], el[1]["end_day"]
+                )
+            )
+    print()
+
+if __name__=="__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--qr",          help="qrcodefile, png format")
+    parser.add_argument("--pdf",         help="qrcodefile, pdf format")
+    parser.add_argument("--txt",         help="read qrcode content from file")
+    parser.add_argument("--settings",    action="store_true", help="Dump settings")
+    parser.add_argument("--no-color",    action="store_true", help="Disable color output")
+
+    args = parser.parse_args()
+
+    txt = args.txt
+    qrfile = args.qr
+    pdffile = args.pdf
+    settings = args.settings
+    color = not args.no_color
+    res = -1
+
+    if color:
+        colorama.init()
+        from termcolor import colored
+    else:
+        # Disable colors
+        colored=lambda x,y: x
+
+    if qrfile != None:
+        res = verify_certificate(qrfile, "png")
+
+    if pdffile != None:
+        res = verify_certificate(pdffile, "pdf")
+
+    if txt != None and txt != "":
+        res = verify_certificate(txt, "txt")
+
+    if settings != False:
+        dump_settings()
+
+    if txt == None and pdffile == None and qrfile == None and settings == False:
+        parser.print_help()
+        sys.exit(1)
+
+    sys.exit(res)
