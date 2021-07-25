@@ -1,9 +1,19 @@
 # Green Pass Verifier
 
+<!-- Image -->
+
 Scriptable green pass verifier.
 With this application you can automatize accesses based on green pass validity.
 
 ## Installation
+You need to have pip and libzbar to install the application.
+
+You can install it using your favorite package manager, for instance in Ubuntu:
+
+```bash
+$ sudo apt install python3-pip libzbar0
+```
+
 <!--
 You can just install the application using pip:
 ```bash
