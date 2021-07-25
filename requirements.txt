@@ -1,4 +1,5 @@
 base45
+fitz
 cbor2
 colorama
 Pillow
@@ -7,3 +8,5 @@ pyOpenSSL
 pyzbar
 requests
 termcolor
+PyMuPDF
+cose
