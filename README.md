@@ -60,3 +60,4 @@ other inputs.
 ```bash
 $ greenpass --settings
 ```
+![Settings screen](https://github.com/berdav/greenpass/blob/master/img/settings.png?raw=true)
