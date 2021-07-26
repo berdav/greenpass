@@ -1,5 +1,4 @@
 base45
-fitz
 cbor2
 colorama
 Pillow
