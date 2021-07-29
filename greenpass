@@ -291,17 +291,43 @@ class GreenPassParser(object):
         }
 
         self.certificate_info = []
-        for el in personal_data["v"]:
+        if personal_data.get("v", None) != None:
+            # Vaccine
+            self.certificate_type = "v"
+        elif personal_data.get("t", None) != None:
+            # Test
+            self.certificate_type = "t"
+        elif personal_data.get("r", None) != None:
+            # Recovery
+            self.certificate_type = "r"
+        else:
+            print("[-] unrecognized certificate type", file=sys.stderr)
+            sys.exit(1)
+
+        for el in personal_data[self.certificate_type]:
             cert = {
-                "Certificate ID":         el["ci"],
-                "Dose number":            int(el["dn"]),
-                "Total doses":            int(el["sd"]),
-                "Vaccine Manufacturer":   el["ma"],
-                "Vaccine product number": el["mp"],
-                "Vaccine type":           el["vp"],
-                "Vaccination Date":       el["dt"],
-                "Vaccination Country":    el["co"],
-                "Target disease":         el["tg"],
+                # Common
+                "Target disease":              el["tg"],
+                "Vaccination or test Country": el["co"],
+                "Certificate Issuer":          el["is"],
+                "Certificate ID":              el["ci"],
+                # Test
+                "Test type":                   el.get("tt", None),
+                "Test name":                   el.get("tn", None),
+                "Date of collection":          el.get("sc", None),
+                "Test result":                 el.get("tr", None),
+                "Testing center":              el.get("tc", None),
+                # Recovery
+                "First positive test":         el.get("fr", None),
+                "Validity from":               el.get("df", None),
+                "Validity until":              el.get("du", None),
+                # Vaccine
+                "Dose number":                 int(el.get("dn", 0)),
+                "Total doses":                 int(el.get("sd", 0)),
+                "Vaccine Manufacturer":        el.get("ma", None),
+                "Vaccine product number":      el.get("mp", None),
+                "Vaccine type":                el.get("vp", None),
+                "Vaccination Date":            el.get("dt", None),
             }
             self.certificate_info.append(cert)
 
@@ -323,6 +349,15 @@ def verify_certificate(path, filetype="png"):
     gpp = GreenPassParser(path, filetype)
     sm = SettingsManager()
 
+    if gpp.certificate_type == "v":
+        certificate_type = "Vaccine"
+    elif gpp.certificate_type == "t":
+        certificate_type = "Test"
+    elif gpp.certificate_type == "r":
+        certificate_type = "Recovery"
+
+    print("{:30s} {}".format("Certificate type", colored(certificate_type, "blue")))
+
     for qr_info in gpp.qr_info.items():
         if qr_info[0] == "Release Date" or qr_info[0] == "Expiration Date":
             print("{:30s} {}".format(qr_info[0], datetime.fromtimestamp(qr_info[1])))
@@ -340,7 +375,7 @@ def verify_certificate(path, filetype="png"):
         expired = True
         vaccine = None
         doses_done = False
-        for cert_info in el.items():
+        for cert_info in tuple(filter(lambda x: x[1] != None, el.items())):
             if not doses_done and dn != -1 and sd != -1:
                 if dn == sd:
                     print("  {:28s}".format("Doses"), colored("{}/{}".format(dn, sd), "green"))
@@ -419,7 +454,9 @@ def verify_certificate(path, filetype="png"):
 
     print("{:30s} {}".format("Verified", colored(verified, color)))
 
-    valid = verified and not expired
+    unknown_cert = gpp.certificate_type != "v"
+
+    valid = verified and not expired and not unknown_cert
     # Unix return code is inverted
     return 1 - valid
 
