@@ -66,10 +66,10 @@ $ greenpass --settings
 If you want more information on the green pass certification and how
 to parse or verify it you can refer to the following resources:
 
-![Greenpass Encoding documentation](https://github.com/ehn-dcc-development/hcert-spec)
+[Greenpass Encoding documentation](https://github.com/ehn-dcc-development/hcert-spec)
 
-![Official Italian Android application](https://github.com/ministero-salute/it-dgc-verificaC19-android )
+[Official Italian Android application](https://github.com/ministero-salute/it-dgc-verificaC19-android )
 
-![JSON schema and specifications](https://ec.europa.eu/health/sites/default/files/ehealth/docs/covid-certificate_json_specification_en.pdf)
+[JSON schema and specifications](https://ec.europa.eu/health/sites/default/files/ehealth/docs/covid-certificate_json_specification_en.pdf)
 
-![A very detailed blog post on how decode the pass](https://gir.st/blog/greenpass.html)
+[A very detailed blog post on how decode the pass](https://gir.st/blog/greenpass.html)
