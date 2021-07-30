@@ -2,6 +2,7 @@ base45
 cbor2
 colorama
 Pillow
+pytz
 pyasn1
 pyOpenSSL
 pyzbar

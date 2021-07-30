@@ -21,6 +21,7 @@ setup(
     install_requires = [
         'base45',
         'PyMuPDF',
+        'pytz',
         'cbor2',
         'colorama',
         'Pillow',
