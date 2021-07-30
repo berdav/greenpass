@@ -510,6 +510,7 @@ def verify_certificate(path, filetype="png"):
                 remaining_hours = "Not yet valid, {:.0f} hours to validity, {} days".format(
                         hours_to_valid, int(hours_to_valid / 24)
                 )
+                remaining_days = remaining_hours
                 expired = True
             elif remaining_hours <= 0:
                 color = "red"
@@ -521,6 +522,7 @@ def verify_certificate(path, filetype="png"):
             elif remaining_hours * 24 < 14:
                 color = "yellow"
                 remaining_hours = "{:.0f} hours left ({} days)".format(remaining_hours, int(remaining_hours / 24))
+                remaining_days = remaining_hours
                 expired = False
             else:
                 color = "green"
@@ -549,7 +551,7 @@ def verify_certificate(path, filetype="png"):
 
     print("{:30s} {}".format("Verified", colored(verified, color)))
 
-    unknown_cert = gpp.certificate_type != "v"
+    unknown_cert = gpp.certificate_type != "v" and gpp.certificate_type != "t"
 
     valid = verified and not expired and not positive and not unknown_cert
     # Unix return code is inverted
