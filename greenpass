@@ -21,6 +21,7 @@ import sys
 import zlib
 import fitz
 import json
+import pytz
 import cbor2
 import base45
 import base64
@@ -46,12 +47,52 @@ txt = None
 # PDF File
 pdffile = None
 # Base url to retrieve data
-BASE_URL = "https://get.dgc.gov.it/v1/dgc/"
+BASE_URL   = "https://get.dgc.gov.it/v1/dgc/"
+TESTES_URL = "https://covid-19-diagnostics.jrc.ec.europa.eu/devices/export?manufacturer=&text_name=&marking=&rapid_diag=&format=&target_type=&field-1=HSC%20common%20list%20%28RAT%29&value-1=1&search_method=AND"
 
-# Manufacturer names
-class VaccineManufacturer(object):
+class TestType(object):
     def __init__(self, t):
         self.t = t
+        self._type = {
+            "LP6464-4":   "molecular",
+            "LP217198-3": "rapid"
+        }
+        self.pretty_name = self._type
+
+    def get_type(self):
+        return self._type.get(self.t, self.t)
+
+    def get_pretty_name(self):
+        return self.pretty_name.get(self.t, self.t)
+
+class TestResult(object):
+    def __init__(self, t):
+        self.t = t
+
+    def is_positive(self):
+        return self.t == 260373001
+
+    def is_negative(self):
+        return self.t == 260415000
+
+    def is_aladeen(self):
+        return not self.is_positive() and not self.is_negative()
+
+    def is_unknown(self):
+        return self.is_aladeen()
+
+    def __str__(self):
+        if self.is_positive():
+            return colored("Positive", "red")
+        elif self.is_negative():
+            return colored("Negative", "green")
+        return colored("Unknown", "yellow")
+
+# Manufacturer names
+class Manufacturer(object):
+    def __init__(self, t, no_net=False):
+        self.t = t
+        # Vaccines
         self.pretty_name = {
             "ORG-100001699": "AstraZeneca",
             "ORG-100030215": "Biontech",
@@ -64,6 +105,21 @@ class VaccineManufacturer(object):
             "ORG-100024420": "Sinopharm",
             "ORG-100032020": "Novavax"
         }
+        # Testes
+        if not no_net:
+            self.pretty_name.update(self.get_testes_pn())
+
+    def get_testes_pn(self):
+        o = {}
+        r = requests.get(TESTES_URL)
+        if r.status_code != 200:
+            return o
+        l = json.loads(r.text)
+        for el in l:
+            o[el["id_device"]] = el["commercial_name"]
+
+        return o
+
     def get_pretty_name(self):
         return self.pretty_name.get(self.t, self.t)
 
@@ -161,6 +217,21 @@ class SettingsManager(object):
             else:
                 print("[~] Unknown field {}".format(el["name"]))
 
+    # Return the time that a test is still valid, negative time if expired
+    def get_test_remaining_time(self, test_date, ttype):
+        hours = self.test.get(ttype, 0)
+
+        try:
+            seconds_since_test = (datetime.now(pytz.utc) - test_date).total_seconds()
+            hours_since_test = seconds_since_test / (60 * 60)
+        except:
+            return 0,0
+
+        valid_start = (hours_since_test - hours["start_hours"])
+        valid_end   = (hours["end_hours"] - hours_since_test)
+
+        return valid_start, valid_end
+
     # Return the time that a vaccine is still valid, negative
     # time if expired
     def get_vaccine_remaining_time(self, vaccination_date, vtype, full):
@@ -172,19 +243,13 @@ class SettingsManager(object):
         days = self.vaccines.get(vtype, { "complete": 0, "not_complete": 0})[selector]
 
         try:
-            seconds_since_vaccine = (datetime.now() - vaccination_date).total_seconds()
+            seconds_since_vaccine = (datetime.now(pytz.utc) - vaccination_date).total_seconds()
             hours_since_vaccine = seconds_since_vaccine / (60 * 60)
         except:
             return 0,0
 
-        if days.get("start_day", None) != None:
-            # Vaccine or day based certification
-            valid_start = (hours_since_vaccine - days["start_day"] * 24)
-            valid_end   = (days["end_day"] * 24 - hours_since_vaccine)
-        else:
-            # Test or hour based certification
-            valid_start = (hours_since_vaccine - days["start_hours"])
-            valid_end   = (days["end_hours"] - hours_since_vaccine)
+        valid_start = (hours_since_vaccine - days["start_day"] * 24)
+        valid_end   = (days["end_day"] * 24 - hours_since_vaccine)
 
         return int(valid_start), int(valid_end)
 
@@ -311,20 +376,21 @@ class GreenPassParser(object):
                 "Vaccination or test Country": el["co"],
                 "Certificate Issuer":          el["is"],
                 "Certificate ID":              el["ci"],
+                # Recovery
+                "First positive test":         el.get("fr", None),
+                "Validity from":               el.get("df", None),
+                "Validity until":              el.get("du", None),
+                # Common for Test and Vaccine
+                "Manufacturer and type":       el.get("ma", None),
                 # Test
                 "Test type":                   el.get("tt", None),
                 "Test name":                   el.get("tn", None),
                 "Date of collection":          el.get("sc", None),
                 "Test result":                 el.get("tr", None),
                 "Testing center":              el.get("tc", None),
-                # Recovery
-                "First positive test":         el.get("fr", None),
-                "Validity from":               el.get("df", None),
-                "Validity until":              el.get("du", None),
                 # Vaccine
                 "Dose number":                 int(el.get("dn", 0)),
                 "Total doses":                 int(el.get("sd", 0)),
-                "Vaccine Manufacturer":        el.get("ma", None),
                 "Vaccine product number":      el.get("mp", None),
                 "Vaccine type":                el.get("vp", None),
                 "Vaccination Date":            el.get("dt", None),
@@ -360,7 +426,7 @@ def verify_certificate(path, filetype="png"):
 
     for qr_info in gpp.qr_info.items():
         if qr_info[0] == "Release Date" or qr_info[0] == "Expiration Date":
-            print("{:30s} {}".format(qr_info[0], datetime.fromtimestamp(qr_info[1])))
+            print("{:30s} {}".format(qr_info[0], datetime.fromtimestamp(qr_info[1], pytz.utc)))
         else:
             print("{:30s} {}".format(qr_info[0], qr_info[1]))
 
@@ -370,77 +436,106 @@ def verify_certificate(path, filetype="png"):
     for el in gpp.certificate_info:
         dn = -1
         sd = -1
+
         vaccinedate = None
-        validity_done = False
+        testcollectiondate = None
+
         expired = True
         vaccine = None
-        doses_done = False
+        positive = False
+        hours_to_valid = None
+        testtype = None
+        remaining_hours = None
         for cert_info in tuple(filter(lambda x: x[1] != None, el.items())):
-            if not doses_done and dn != -1 and sd != -1:
-                if dn == sd:
-                    print("  {:28s}".format("Doses"), colored("{}/{}".format(dn, sd), "green"))
-                elif dn < sd and dn != 0:
-                    print("  {:28s}".format("Doses"), colored("{}/{}".format(dn, sd), "yellow"))
-
-                doses_done = True
-
-            if not validity_done and doses_done and vaccinedate != None and vaccine != None:
-                color = "white"
-                hours_to_valid, remaining_hours = sm.get_vaccine_remaining_time(vaccinedate, vaccine, dn == sd)
-
-                if hours_to_valid < 0:
-                    color = "red"
-                    remaining_hours = "Not yet valid, {} hours to validity, {} days".format(
-                            hours_to_valid, int(hours_to_valid / 24)
-                    )
-                    expired = True
-                elif remaining_hours <= 0:
-                    color = "red"
-                    remaining_days = "Expired since {} hours, {} days".format(
-                            -remaining_hours,
-                            -int(remaining_hours / 24)
-                    )
-                    expired = True
-                elif remaining_hours * 24 < 14:
-                    color = "yellow"
-                    remaining_hours = "{} hours left ({} days)".format(remaining_hours, int(remaining_hours / 24))
-                    expired = False
-                else:
-                    color = "green"
-                    remaining_days = "{} hours left, {} days, ~ {} months".format(
-                        remaining_hours,
-                        int(remaining_hours / 24),
-                        round(remaining_hours / 24 / 30)
-                    )
-                    expired = False
-
-                print("  {:28s} {} ({})".format(
-                    "Vaccination Date", colored(vaccinedate, color), colored(remaining_days, color)
-                ))
-
-                validity_done = True
-
             if cert_info[0] == "Dose number":
                 dn = cert_info[1]
+            elif cert_info[0] == "Test result":
+                t = TestResult(int(cert_info[1]))
+                # Strict check, also unknown do not get validated
+                positive = not t.is_negative()
+                print("  {:28s} {}".format(cert_info[0], t))
             elif cert_info[0] == "Total doses":
                 sd = cert_info[1]
             elif cert_info[0] == "Vaccine product number":
                 vaccine = cert_info[1]
                 cout = colored(Vaccine(cert_info[1]).get_pretty_name(), "blue")
                 print("  {:28s} {}".format(cert_info[0], cout))
+            elif cert_info[0] == "Test type":
+                testtype = cert_info[1]
+                cout = colored(TestType(cert_info[1]).get_pretty_name(), "blue")
+                print("  {:28s} {}".format(cert_info[0], cout))
             elif cert_info[0] == "Vaccination Date":
                 try:
                     vaccinedate = datetime.strptime(cert_info[1], "%Y-%m-%d")
+                    vaccinedate = pytz.utc.localize(vaccinedate, is_dst=None).astimezone(pytz.utc)
                 except:
                     vaccinedate = 0
-            elif cert_info[0] == "Vaccine Manufacturer":
-                cout = colored(VaccineManufacturer(cert_info[1]).get_pretty_name(), "blue")
+                certdate  = vaccinedate
+            elif cert_info[0] == "Date of collection":
+                try:
+                    testcollectiondate = datetime.strptime(cert_info[1], "%Y-%m-%dT%H:%M:%S%z")
+                except:
+                    testcollectiondate = 0
+                certdate = testcollectiondate
+            elif cert_info[0] == "Manufacturer and type":
+                cout = colored(Manufacturer(cert_info[1]).get_pretty_name(), "blue")
                 print("  {:28s} {}".format(cert_info[0], cout))
             elif cert_info[0] == "Target disease":
                 cout = colored(Disease(cert_info[1]).get_pretty_name(), "blue")
                 print("  {:28s} {}".format(cert_info[0], cout))
             else:
                 print("  {:28s} {}".format(cert_info[0], cert_info[1]))
+
+        # Complex fields parse
+        if dn > 0 and sd > 0:
+            if dn == sd:
+                print("  {:28s}".format("Doses"), colored("{}/{}".format(dn, sd), "green"))
+            elif dn < sd and dn != 0:
+                print("  {:28s}".format("Doses"), colored("{}/{}".format(dn, sd), "yellow"))
+
+        # Check test validity
+        if testcollectiondate != None and testtype != None:
+            color = "white"
+            ttype = TestType(testtype)
+            hours_to_valid, remaining_hours = sm.get_test_remaining_time(testcollectiondate, ttype.get_type())
+
+        # Check vaccine validity
+        if vaccinedate != None and vaccine != None:
+            color = "white"
+            hours_to_valid, remaining_hours = sm.get_vaccine_remaining_time(vaccinedate, vaccine, dn == sd)
+
+        if hours_to_valid != None and remaining_hours != None:
+            if hours_to_valid < 0:
+                color = "red"
+                remaining_hours = "Not yet valid, {:.0f} hours to validity, {} days".format(
+                        hours_to_valid, int(hours_to_valid / 24)
+                )
+                expired = True
+            elif remaining_hours <= 0:
+                color = "red"
+                remaining_days = "Expired since {:.0f} hours, {} days".format(
+                        -remaining_hours,
+                        -int(remaining_hours / 24)
+                )
+                expired = True
+            elif remaining_hours * 24 < 14:
+                color = "yellow"
+                remaining_hours = "{:.0f} hours left ({} days)".format(remaining_hours, int(remaining_hours / 24))
+                expired = False
+            else:
+                color = "green"
+                remaining_days = "{:.0f} hours left, {} days, ~ {} months".format(
+                    remaining_hours,
+                    int(remaining_hours / 24),
+                    round(remaining_hours / 24 / 30)
+                )
+                expired = False
+
+            print("  {:28s} {} ({})".format(
+                "{} Date".format(certificate_type),
+                colored(certdate, color), colored(remaining_days, color)
+            ))
+
 
     cup = CertificateUpdater()
     key = cup.get_key(gpp.get_kid())
@@ -456,7 +551,7 @@ def verify_certificate(path, filetype="png"):
 
     unknown_cert = gpp.certificate_type != "v"
 
-    valid = verified and not expired and not unknown_cert
+    valid = verified and not expired and not positive and not unknown_cert
     # Unix return code is inverted
     return 1 - valid
 
