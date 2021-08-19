@@ -107,9 +107,9 @@ class Manufacturer(object):
         }
         # Testes
         if not no_net:
-            self.pretty_name.update(self.get_testes_pn())
+            self.pretty_name.update(self.get_tests_pn())
 
-    def get_testes_pn(self):
+    def get_tests_pn(self):
         o = {}
         r = requests.get(TESTES_URL)
         if r.status_code != 200:
@@ -560,7 +560,7 @@ def verify_certificate(path, filetype="png"):
 def dump_settings():
     sm = SettingsManager()
 
-    print("Testes")
+    print("Tests")
     for el in sm.test.items():
         print("  {} not before: {:4d} hours   not after: {:4d} hours".format(
             colored("{:25s}".format(el[0]), "blue"), el[1]["start_hours"], el[1]["end_hours"])
