@@ -48,8 +48,8 @@ Standard input and pipes
 $ zbarimg --raw greenpass.png | greenpass --txt -
 ```
 
-On a side note, you can verify camera-acquired images if your QRcode
-scanner print the raw content of the green pass on stdout
+On a side note, you can verify camera-acquired images if your scanner
+prints the raw content of the QRcode on stdout
 ```bash
 $ zbarcam --raw -q1 | greenpass --txt -
 ```
