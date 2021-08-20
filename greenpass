@@ -47,9 +47,11 @@ qrfile = None
 txt = None
 # PDF File
 pdffile = None
-# Base url to retrieve data
-BASE_URL   = "https://get.dgc.gov.it/v1/dgc/"
-TESTES_URL = "https://covid-19-diagnostics.jrc.ec.europa.eu/devices/export?manufacturer=&text_name=&marking=&rapid_diag=&format=&target_type=&field-1=HSC%20common%20list%20%28RAT%29&value-1=1&search_method=AND"
+# Base url to retrieve data (DGC)
+BASE_URL_DGC   = "https://get.dgc.gov.it/v1/dgc/"
+# Base url to retrieve data (NHS)
+BASE_URL_NHS   = "https://covid-status.service.nhsx.nhs.uk/"
+TESTS_URL = "https://covid-19-diagnostics.jrc.ec.europa.eu/devices/export?manufacturer=&text_name=&marking=&rapid_diag=&format=&target_type=&field-1=HSC%20common%20list%20%28RAT%29&value-1=1&search_method=AND"
 
 class TestType(object):
     def __init__(self, t):
@@ -112,7 +114,7 @@ class Manufacturer(object):
 
     def get_tests_pn(self):
         o = {}
-        r = requests.get(TESTES_URL)
+        r = requests.get(TESTS_URL)
         if r.status_code != 200:
             return o
         l = json.loads(r.text)
@@ -155,7 +157,7 @@ class Disease(object):
 # Retrieve settings from unified API endpoint
 class SettingsManager(object):
     def __init__(self):
-        r = requests.get("{}/settings".format(BASE_URL))
+        r = requests.get("{}/settings".format(BASE_URL_DGC))
         if r.status_code!=200:
             print("[-] Error from API")
             sys.exit(1)
@@ -281,27 +283,44 @@ class CertificateUpdater(object):
         pass
 
     # Get KEY index from online status page
-    def get_kid_idx(self, kid):
-        r = requests.get("{}/signercertificate/status".format(BASE_URL))
+    def _get_kid_idx(self, kid, _type="dgc"):
+        if _type == "dgc":
+            r = requests.get("{}/signercertificate/status".format(BASE_URL_DGC))
+        elif _type == "nhs":
+            r = requests.get("{}/pubkeys/keys.json".format(BASE_URL_NHS))
+        else:
+            return ("unk", -1)
         if r.status_code != 200:
             print("[-] Error from API")
             sys.exit(1)
         i = 0
         hexkid = hexlify(kid)
         for x in json.loads(r.text):
-            print(hexlify(base64.b64decode(x)), hexkid)
-            if hexlify(base64.b64decode(x)) == hexkid:
-                return i
+            if _type == "dgc":
+                targetkid = hexlify(base64.b64decode(x))
+            if _type == "nhs":
+                targetkid = hexlify(base64.b64decode(x["kid"]))
+            if targetkid == hexkid:
+                return (_type, i)
             i += 1
+        return (_type, -1)
+
+    # Dispatch to correct Key IDX retrieve function
+    def get_kid_idx(self, kid):
+        k = self._get_kid_idx(kid, "dgc")
+        if k[1] != -1:
+            return k
+        k = self._get_kid_idx(kid, "nhs")
+        if k[1] != -1:
+            return k
+
         print("[-] Could not find certification authority")
         sys.exit(1)
 
-    # Retrieve key from remote repository
-    def get_key(self, kid):
-        idx = self.get_kid_idx(kid)
-        print(idx)
+    # Get key from DGC style repository
+    def get_key_dgc(self, idx):
         headers = { "x-resume-token": str(idx) }
-        r = requests.get("{}/signercertificate/update".format(BASE_URL), headers=headers)
+        r = requests.get("{}/signercertificate/update".format(BASE_URL_DGC), headers=headers)
         if r.status_code != 200:
             print("[-] Error from API")
             sys.exit(1)
@@ -311,6 +330,24 @@ class CertificateUpdater(object):
         # Load certificate and dump the pubkey
         x509 = crypto.load_certificate(crypto.FILETYPE_ASN1, certificate)
         pubkey = crypto.dump_publickey(crypto.FILETYPE_ASN1, x509.get_pubkey())[26::]
+        return pubkey
+
+    # Get key from NHS style repository
+    def get_key_nhs(self, idx):
+        r = requests.get("{}/pubkeys/keys.json".format(BASE_URL_NHS))
+        for x in json.loads(r.text):
+            targetkid = hexlify(base64.b64decode(x["kid"]))
+            if targetkid == hexkid:
+                return base64.b64decode(x["publicKey"])
+
+    # Retrieve key from remote repository
+    def get_key(self, kid):
+        keytype, idx = self.get_kid_idx(kid)
+
+        if keytype == "dgc":
+            pubkey = self.get_key_dgc(idx)
+        elif keytype == "nhs":
+            pubkey = self.get_key_nhs(idx)
 
         # X is the first 32 bits, Y are the remaining ones
         x = pubkey[1:int(len(pubkey)/2) + 1]
