@@ -307,10 +307,10 @@ class CertificateUpdater(object):
 
     # Dispatch to correct Key IDX retrieve function
     def get_kid_idx(self, kid):
-        k = self._get_kid_idx(kid, "dgc")
+        k = self._get_kid_idx(kid, "nhs")
         if k[1] != -1:
             return k
-        k = self._get_kid_idx(kid, "nhs")
+        k = self._get_kid_idx(kid, "dgc")
         if k[1] != -1:
             return k
 
