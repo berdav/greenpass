@@ -34,6 +34,7 @@ from OpenSSL import crypto
 from binascii import hexlify
 from datetime import datetime
 from cose.keys import EC2Key, CoseKey
+from cose.headers import KID
 from cose.messages import CoseMessage
 
 # Colored output
@@ -338,7 +339,7 @@ class GreenPassParser(object):
 
         self.cose = CoseMessage.decode(uncompressed)
 
-        self.kid = list(self.cose.phdr.items())[0][1]
+        self.kid = self.get_kid_from_cose(self.cose.phdr)
         payload = cbor2.loads(self.cose.payload)
 
         self.qr_info = {
@@ -396,6 +397,14 @@ class GreenPassParser(object):
                 "Vaccination Date":            el.get("dt", None),
             }
             self.certificate_info.append(cert)
+
+    # Isolate KID from COSE object
+    def get_kid_from_cose(self, phdr):
+        for k in phdr.keys():
+            if (k == type(KID())):
+                return phdr[k]
+        print("Could not find KID", file=sys.stderr)
+        return None
 
     # Get Key ID from the QRCode
     def get_kid(self):
