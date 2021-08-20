@@ -254,6 +254,27 @@ class SettingsManager(object):
 
         return int(valid_start), int(valid_end)
 
+    # Return the time that a recovery certification is still valid, negative
+    # time if expired
+    def get_recovery_remaining_time(self, recovery_from, recovery_until):
+        days = self.recovery
+
+        #try:
+        seconds_since_recovery = (datetime.now(pytz.utc) - recovery_from).total_seconds()
+        hours_since_recovery = seconds_since_recovery / (60 * 60)
+        #except:
+        #    return 0,0
+
+        valid_start = (hours_since_recovery - days["start_day"] * 24)
+        valid_end   = (days["end_day"] * 24 - hours_since_recovery)
+
+        valid_until = (recovery_until - datetime.now(pytz.utc)).total_seconds()
+        valid_until = valid_until / (60 * 60)
+
+        valid_end = min(valid_end, valid_until)
+
+        return int(valid_start), int(valid_end)
+
 # Update certificate signer
 class CertificateUpdater(object):
     def __init__(self):
@@ -268,14 +289,17 @@ class CertificateUpdater(object):
         i = 0
         hexkid = hexlify(kid)
         for x in json.loads(r.text):
+            print(hexlify(base64.b64decode(x)), hexkid)
             if hexlify(base64.b64decode(x)) == hexkid:
                 return i
             i += 1
-        return -1
+        print("[-] Could not find certification authority")
+        sys.exit(1)
 
     # Retrieve key from remote repository
     def get_key(self, kid):
         idx = self.get_kid_idx(kid)
+        print(idx)
         headers = { "x-resume-token": str(idx) }
         r = requests.get("{}/signercertificate/update".format(BASE_URL), headers=headers)
         if r.status_code != 200:
@@ -447,6 +471,8 @@ def verify_certificate(path, filetype="png"):
         sd = -1
 
         vaccinedate = None
+        recovery_from  = None
+        recovery_until = None
         testcollectiondate = None
 
         expired = True
@@ -463,6 +489,19 @@ def verify_certificate(path, filetype="png"):
                 # Strict check, also unknown do not get validated
                 positive = not t.is_negative()
                 print("  {:28s} {}".format(cert_info[0], t))
+            elif cert_info[0] == "Validity from":
+                try:
+                    recovery_from = datetime.strptime(cert_info[1], "%Y-%m-%d")
+                    recovery_from = pytz.utc.localize(recovery_from, is_dst=None).astimezone(pytz.utc)
+                except:
+                    recovery_from = 0
+            elif cert_info[0] == "Validity until":
+                try:
+                    recovery_until = datetime.strptime(cert_info[1], "%Y-%m-%d")
+                    recovery_until = pytz.utc.localize(recovery_until, is_dst=None).astimezone(pytz.utc)
+                except:
+                    recovery_until = 0
+                certdate = recovery_from
             elif cert_info[0] == "Total doses":
                 sd = cert_info[1]
             elif cert_info[0] == "Vaccine product number":
@@ -513,6 +552,11 @@ def verify_certificate(path, filetype="png"):
             color = "white"
             hours_to_valid, remaining_hours = sm.get_vaccine_remaining_time(vaccinedate, vaccine, dn == sd)
 
+        # Check recovery validity
+        if recovery_from != None and recovery_until != None:
+            color = "white"
+            hours_to_valid, remaining_hours = sm.get_recovery_remaining_time(recovery_from, recovery_until)
+
         if hours_to_valid != None and remaining_hours != None:
             if hours_to_valid < 0:
                 color = "red"
@@ -560,7 +604,7 @@ def verify_certificate(path, filetype="png"):
 
     print("{:30s} {}".format("Verified", colored(verified, color)))
 
-    unknown_cert = gpp.certificate_type != "v" and gpp.certificate_type != "t"
+    unknown_cert = gpp.certificate_type not in ( "v", "t", "r" )
 
     valid = verified and not expired and not positive and not unknown_cert
     # Unix return code is inverted
