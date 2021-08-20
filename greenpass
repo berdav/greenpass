@@ -261,11 +261,11 @@ class SettingsManager(object):
     def get_recovery_remaining_time(self, recovery_from, recovery_until):
         days = self.recovery
 
-        #try:
-        seconds_since_recovery = (datetime.now(pytz.utc) - recovery_from).total_seconds()
-        hours_since_recovery = seconds_since_recovery / (60 * 60)
-        #except:
-        #    return 0,0
+        try:
+            seconds_since_recovery = (datetime.now(pytz.utc) - recovery_from).total_seconds()
+            hours_since_recovery = seconds_since_recovery / (60 * 60)
+        except:
+            return 0,0
 
         valid_start = (hours_since_recovery - days["start_day"] * 24)
         valid_end   = (days["end_day"] * 24 - hours_since_recovery)
