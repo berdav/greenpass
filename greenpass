@@ -1,5 +1,4 @@
-#!/home/riccardo/.local/share/virtualenvs/pipass-4gGy4IGJ/bin/python
-
+#!/usr/bin/env python3
 # Green Pass Parser
 # Copyright (C) 2021  Davide Berardi -- <berardi.dav@gmail.com>
 #
