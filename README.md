@@ -45,7 +45,7 @@ $ greenpass --txt greenpass.txt
 
 Standard input and pipes
 ```bash
-$ zbarimg --raw greenpass.png | greenpass --txt -
+$ zbarimg --raw greenpass.png | greenpass --txt loopinput
 ```
 
 On a side note, you can verify camera-acquired images if your scanner

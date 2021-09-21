@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/home/riccardo/.local/share/virtualenvs/pipass-4gGy4IGJ/bin/python
 
 # Green Pass Parser
 # Copyright (C) 2021  Davide Berardi -- <berardi.dav@gmail.com>
@@ -36,6 +36,7 @@ from datetime import datetime
 from cose.keys import EC2Key, CoseKey
 from cose.headers import KID
 from cose.messages import CoseMessage
+import os.path
 
 # Colored output
 color = False
@@ -368,10 +369,21 @@ class GreenPassParser(object):
     def __init__(self, path, filetype="png"):
         if filetype == "txt":
             if path == "-":
-                outdata = bytes(sys.stdin.read().replace("\n", "").encode("ASCII"))
+                line = sys.stdin.read().replace("\n", "")
+                outdata = outdata.replace("\n","")
+                print("Outdata: ",outdata)
             else:
-                with open(path, 'rb') as f:
-                    outdata = f.read()
+                # Modified behavior: if reading from zbarcam input is "continuously" piped so reading
+                # through a loop is needed. The workaround is if not passing an existent path to try 
+                # decoding the standard input
+                if os.path.exists(path):
+                    with open(path, 'rb') as f:
+                        outdata = f.read()
+                else:
+                    outdata = path.replace("\n","")
+                    outdata = bytes(outdata.encode("ASCII"))
+                    print("Outdata STDIN: ", outdata)
+
         else:
             if filetype == "png":
                 img = Image.open(path)
@@ -458,7 +470,7 @@ class GreenPassParser(object):
                 "Vaccination Date":            el.get("dt", None),
             }
             self.certificate_info.append(cert)
-
+        print("Exiting")
     # Isolate KID from COSE object
     def get_kid_from_cose(self, phdr):
         for k in phdr.keys():
@@ -704,7 +716,11 @@ if __name__=="__main__":
         res = verify_certificate(pdffile, "pdf")
 
     if txt != None and txt != "":
-        res = verify_certificate(txt, "txt")
+        if txt == "loopinput":
+            for line in sys.stdin:
+                res = verify_certificate(line, "txt")
+        else:
+            res = verify_certificate(txt, "txt")
 
     if settings != False:
         dump_settings()
