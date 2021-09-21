@@ -368,7 +368,7 @@ class GreenPassParser(object):
     def __init__(self, path, filetype="png"):
         if filetype == "txt":
             if path == "-":
-                outdata = bytes(sys.stdin.read().replace("\n", "").encode("ASCII"))
+                outdata = bytes(sys.stdin.read().split("\n")[0].encode("ASCII"))
             else:
                 with open(path, 'rb') as f:
                     outdata = f.read()
