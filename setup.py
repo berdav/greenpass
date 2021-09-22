@@ -8,7 +8,7 @@ with open("README.md") as f:
 setup(
     name             = 'greenpass',
     scripts          = [ "greenpass" ],
-    version          = '2.0',
+    version          = '2.1',
     license          = 'GPLv3',
     description      = 'Scriptable green pass verifier',
     long_description = description,
@@ -16,7 +16,7 @@ setup(
     author           = 'Davide Berardi',
     author_email     = 'berardi.dav@gmail.com',
     url              = 'https://github.com/berdav/greenpass',
-    download_url     = 'https://github.com/berdav/greenpass/archive/refs/tags/v2.0.zip',
+    download_url     = 'https://github.com/berdav/greenpass/archive/refs/tags/v2.1.zip',
     keywords         = [ 'covid19', 'greenpass', 'certificates', 'authorization' ],
     install_requires = [
         'base45',
@@ -25,7 +25,6 @@ setup(
         'cbor2',
         'colorama',
         'Pillow',
-        'pickle',
         'pyasn1',
         'pyOpenSSL',
         'pyzbar',
