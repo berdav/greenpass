@@ -768,7 +768,7 @@ if __name__=="__main__":
     parser.add_argument("--settings",    action="store_true", help="Dump settings")
     parser.add_argument("--no-color",    action="store_true", help="Disable color output")
     parser.add_argument("--cachedir",    help="Cache directory, defaults to {}".format(DEFAULT_CACHE_DIR))
-    parser.add_argument("--no-cache",    help="Do not use cache")
+    parser.add_argument("--no-cache",    action="store_true", help="Do not use cache")
 
     args = parser.parse_args()
 
@@ -780,6 +780,10 @@ if __name__=="__main__":
     cachedir = DEFAULT_CACHE_DIR
     if args.cachedir != None:
         cachedir = args.cachedir
+
+    if args.no_cache:
+        cachedir = ''
+
     res = -1
 
     if color:
