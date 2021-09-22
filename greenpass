@@ -17,6 +17,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import io
+import os
 import sys
 import zlib
 import fitz
@@ -25,9 +26,11 @@ import pytz
 import cbor2
 import base45
 import base64
+import pickle
 import argparse
 import requests
 import colorama
+import functools
 from PIL import Image
 from pyzbar import pyzbar
 from OpenSSL import crypto
@@ -52,6 +55,12 @@ BASE_URL_DGC   = "https://get.dgc.gov.it/v1/dgc/"
 # Base url to retrieve data (NHS)
 BASE_URL_NHS   = "https://covid-status.service.nhsx.nhs.uk/"
 TESTS_URL = "https://covid-19-diagnostics.jrc.ec.europa.eu/devices/export?manufacturer=&text_name=&marking=&rapid_diag=&format=&target_type=&field-1=HSC%20common%20list%20%28RAT%29&value-1=1&search_method=AND"
+
+# Cache Directory
+DEFAULT_CACHE_DIR=functools.reduce(
+    os.path.join,
+    [ os.path.expanduser("~"), ".local", "greenpass" ]
+)
 
 class TestType(object):
     def __init__(self, t):
@@ -93,7 +102,7 @@ class TestResult(object):
 
 # Manufacturer names
 class Manufacturer(object):
-    def __init__(self, t, no_net=False):
+    def __init__(self, t, cachedir=''):
         self.t = t
         # Vaccines
         self.pretty_name = {
@@ -109,8 +118,10 @@ class Manufacturer(object):
             "ORG-100032020": "Novavax"
         }
         # Testes
-        if not no_net:
+        if cachedir == '':
             self.pretty_name.update(self.get_tests_pn())
+        else:
+            self.pretty_name.update(self.get_cached_tests_pn(cachedir))
 
     def get_tests_pn(self):
         o = {}
@@ -123,8 +134,24 @@ class Manufacturer(object):
 
         return o
 
+    def get_cached_tests_pn(self, cachedir):
+        testcache = os.path.join(cachedir, "tests")
+
+        if not os.path.exists(cachedir):
+            os.mkdir(cachedir)
+
+        if not os.path.exists(testcache):
+            with open(testcache, 'wb') as f:
+                pickle.dump(self.get_tests_pn(), f)
+
+        with open(testcache, 'rb') as f:
+            tests = pickle.load(f)
+
+        return tests
+
     def get_pretty_name(self):
         return self.pretty_name.get(self.t, self.t)
+
 
 # Vaccine names
 class Vaccine(object):
@@ -156,7 +183,26 @@ class Disease(object):
 
 # Retrieve settings from unified API endpoint
 class SettingsManager(object):
-    def __init__(self):
+    def __init__(self, cachedir=''):
+        if cachedir != '':
+            self.get_cached_settings()
+        else:
+            self.get_settings()
+
+    def get_cached_settings(self):
+        settings = os.path.join(cachedir, "settings")
+
+        if not os.path.exists(cachedir):
+            os.mkdir(cachedir)
+
+        if not os.path.exists(settings):
+            with open(settings, 'wb') as f:
+                pickle.dump(self.get_settings(), f)
+
+        with open(settings, 'rb') as f:
+            self.vaccines, self.recovery, self.test = pickle.load(f)
+
+    def get_settings(self):
         r = requests.get("{}/settings".format(BASE_URL_DGC))
         if r.status_code!=200:
             print("[-] Error from API")
@@ -219,6 +265,7 @@ class SettingsManager(object):
                 pass
             else:
                 print("[~] Unknown field {}".format(el["name"]))
+        return self.vaccines, self.recovery, self.test
 
     # Return the time that a test is still valid, negative time if expired
     def get_test_remaining_time(self, test_date, ttype):
@@ -326,7 +373,10 @@ class CertificateUpdater(object):
             sys.exit(1)
 
         certificate = base64.b64decode(r.text)
+        return certificate
 
+    # Return public key
+    def loadpubkey(self, certificate):
         # Load certificate and dump the pubkey
         x509 = crypto.load_certificate(crypto.FILETYPE_ASN1, certificate)
         pubkey = crypto.dump_publickey(crypto.FILETYPE_ASN1, x509.get_pubkey())[26::]
@@ -348,7 +398,16 @@ class CertificateUpdater(object):
             pubkey = self.get_key_dgc(idx)
         elif keytype == "nhs":
             pubkey = self.get_key_nhs(idx)
+        return pubkey
 
+    # Retrieve key and convert to coseobj
+    def get_key_coseobj(self, kid):
+        certificate = self.get_key(kid)
+        pubkey = self.loadpubkey(certificate)
+        return self.getcoseobj(pubkey)
+
+    # Return COSE object from public key
+    def getcoseobj(self, pubkey):
         # X is the first 32 bits, Y are the remaining ones
         x = pubkey[1:int(len(pubkey)/2) + 1]
         y = pubkey[int(len(pubkey)/2) + 1::]
@@ -362,6 +421,31 @@ class CertificateUpdater(object):
                 "Y":     y
         }
         return CoseKey.from_dict(kattr)
+
+# Cached version of Certificate Updater,
+#  saves and retrieves public keys using a cache directory
+class CachedCertificateUpdater(CertificateUpdater):
+    def __init__(self, cachedir):
+        self.cachedir = cachedir
+        if not os.path.exists(cachedir):
+            try:
+                os.mkdir(cachedir)
+            except FileExistsError:
+                pass
+
+    def get_key(self, kid):
+        enckid = base64.b64encode(kid).decode()
+        cachepath = os.path.join(self.cachedir, enckid)
+        superclass = super(CachedCertificateUpdater, self)
+
+        if not os.path.exists(cachepath):
+            with open(cachepath, "wb") as f:
+                f.write(superclass.get_key(kid))
+
+        with open(cachepath, "rb") as f:
+            keybytes = f.read()
+
+        return keybytes
 
 # Parse a green pass file
 class GreenPassParser(object):
@@ -481,9 +565,9 @@ class GreenPassParser(object):
 
 
 # Verify certificate
-def verify_certificate(path, filetype="png"):
+def verify_certificate(path, filetype="png", cachedir=''):
     gpp = GreenPassParser(path, filetype)
-    sm = SettingsManager()
+    sm = SettingsManager(cachedir)
 
     if gpp.certificate_type == "v":
         certificate_type = "Vaccine"
@@ -563,7 +647,7 @@ def verify_certificate(path, filetype="png"):
                     testcollectiondate = 0
                 certdate = testcollectiondate
             elif cert_info[0] == "Manufacturer and type":
-                cout = colored(Manufacturer(cert_info[1]).get_pretty_name(), "blue")
+                cout = colored(Manufacturer(cert_info[1], cachedir).get_pretty_name(), "blue")
                 print("  {:28s} {}".format(cert_info[0], cout))
             elif cert_info[0] == "Target disease":
                 cout = colored(Disease(cert_info[1]).get_pretty_name(), "blue")
@@ -629,8 +713,11 @@ def verify_certificate(path, filetype="png"):
             ))
 
 
-    cup = CertificateUpdater()
-    key = cup.get_key(gpp.get_kid())
+    if cachedir != '':
+        cup = CachedCertificateUpdater(cachedir)
+    else:
+        cup = CertificateUpdater()
+    key = cup.get_key_coseobj(gpp.get_kid())
     gpp.set_key(key)
     verified = gpp.verify()
 
@@ -680,6 +767,8 @@ if __name__=="__main__":
     parser.add_argument("--txt",         help="read qrcode content from file")
     parser.add_argument("--settings",    action="store_true", help="Dump settings")
     parser.add_argument("--no-color",    action="store_true", help="Disable color output")
+    parser.add_argument("--cachedir",    help="Cache directory, defaults to {}".format(DEFAULT_CACHE_DIR))
+    parser.add_argument("--no-cache",    help="Do not use cache")
 
     args = parser.parse_args()
 
@@ -688,6 +777,9 @@ if __name__=="__main__":
     pdffile = args.pdf
     settings = args.settings
     color = not args.no_color
+    cachedir = DEFAULT_CACHE_DIR
+    if args.cachedir != None:
+        cachedir = args.cachedir
     res = -1
 
     if color:
@@ -698,13 +790,13 @@ if __name__=="__main__":
         colored=lambda x,y: x
 
     if qrfile != None:
-        res = verify_certificate(qrfile, "png")
+        res = verify_certificate(qrfile, "png", cachedir)
 
     if pdffile != None:
-        res = verify_certificate(pdffile, "pdf")
+        res = verify_certificate(pdffile, "pdf", cachedir)
 
     if txt != None and txt != "":
-        res = verify_certificate(txt, "txt")
+        res = verify_certificate(txt, "txt", cachedir)
 
     if settings != False:
         dump_settings()
