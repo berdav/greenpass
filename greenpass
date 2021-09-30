@@ -485,15 +485,15 @@ class GreenPassParser(object):
         self.cose = CoseMessage.decode(uncompressed)
 
         self.kid = self.get_kid_from_cose(self.cose.phdr)
-        payload = cbor2.loads(self.cose.payload)
+        self.payload = cbor2.loads(self.cose.payload)
 
         self.qr_info = {
-            "Release Country": payload[1],
-            "Release Date":    int(payload[6]),
-            "Expiration Date": int(payload[4])
+            "Release Country": self.payload[1],
+            "Release Date":    int(self.payload[6]),
+            "Expiration Date": int(self.payload[4])
         }
 
-        personal_data = payload[-260][1]
+        personal_data = self.payload[-260][1]
         self.personal_info = {
             "Version":       personal_data["ver"],
             "Date of Birth": personal_data["dob"],
@@ -563,10 +563,17 @@ class GreenPassParser(object):
     def verify(self):
         return self.cose.verify_signature()
 
+    # Dump the content of the payload in JSON format
+    def dump(self, file=sys.stdout):
+        print(json.dumps(self.payload), file=file)
+
 
 # Verify certificate
-def verify_certificate(path, filetype="png", cachedir=''):
+def verify_certificate(path, filetype="png", cachedir='', raw=False):
     gpp = GreenPassParser(path, filetype)
+    if raw:
+        return gpp.dump(file=sys.stdout)
+
     sm = SettingsManager(cachedir)
 
     if gpp.certificate_type == "v":
@@ -765,6 +772,7 @@ if __name__=="__main__":
     parser.add_argument("--qr",          help="qrcodefile, png format")
     parser.add_argument("--pdf",         help="qrcodefile, pdf format")
     parser.add_argument("--txt",         help="read qrcode content from file")
+    parser.add_argument("--raw",         action="store_true", help="print raw data of certificate in json format")
     parser.add_argument("--settings",    action="store_true", help="Dump settings")
     parser.add_argument("--no-color",    action="store_true", help="Disable color output")
     parser.add_argument("--cachedir",    help="Cache directory, defaults to {}".format(DEFAULT_CACHE_DIR))
@@ -773,6 +781,7 @@ if __name__=="__main__":
     args = parser.parse_args()
 
     txt = args.txt
+    raw = args.raw
     qrfile = args.qr
     pdffile = args.pdf
     settings = args.settings
@@ -794,13 +803,13 @@ if __name__=="__main__":
         colored=lambda x,y: x
 
     if qrfile != None:
-        res = verify_certificate(qrfile, "png", cachedir)
+        res = verify_certificate(qrfile, "png", cachedir, raw=raw)
 
     if pdffile != None:
-        res = verify_certificate(pdffile, "pdf", cachedir)
+        res = verify_certificate(pdffile, "pdf", cachedir, raw=raw)
 
     if txt != None and txt != "":
-        res = verify_certificate(txt, "txt", cachedir)
+        res = verify_certificate(txt, "txt", cachedir, raw=raw)
 
     if settings != False:
         dump_settings()
