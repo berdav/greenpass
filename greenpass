@@ -18,6 +18,7 @@
 
 import io
 import os
+import re
 import sys
 import zlib
 import fitz
@@ -878,7 +879,20 @@ class LogicManager(object):
                 certdate  = vaccinedate
             elif cert_info[0] == k.get_date_of_collection()[1]:
                 try:
-                    testcollectiondate = datetime.strptime(cert_info[1], "%Y-%m-%dT%H:%M:%S%z")
+                    # strptime on Python < 3.7 does not correctly parse the timezone
+                    # format with a colon inside, remove the colon in the timezone
+                    # specification.
+                    rgx = r"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})([+-]\d{2}(?::\d{2}))?"
+                    r = re.match(rgx, cert_info[1])
+                    date = r.group(1)
+                    zone = r.group(2)
+
+                    if zone == None:
+                        date += "+0000"
+                    else:
+                        date += r.group(2).replace(":", "")
+
+                    testcollectiondate = datetime.strptime(date, "%Y-%m-%dT%H:%M:%S%z")
                 except:
                     testcollectiondate = 0
                 certdate = testcollectiondate
