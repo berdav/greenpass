@@ -520,7 +520,7 @@ class CertificateUpdater(object):
 class CachedCertificateUpdater(CertificateUpdater):
     def __init__(self, cachedir):
         self.cachedir = cachedir
-        os.makedirs(cachedirs, exist_ok=True)
+        os.makedirs(cachedir, exist_ok=True)
 
     def get_key(self, kid):
         enckid = base64.b64encode(kid).decode()
@@ -797,13 +797,13 @@ class GreenPassParser(object):
 #  output.
 class LogicManager(object):
 
-    def __init__(self):
+    def __init__(self, cachedir):
+        self.cachedir = cachedir
         pass
 
     # Verify certificate
     def verify_certificate(self,
                            output,
-                           cachedir='',
                            raw=False,
                            k=GreenPassKeyManager()):
         dn = -1
@@ -933,8 +933,8 @@ class LogicManager(object):
 
             output.add_remaining_time(certificate_type, certdate, level, remaining_days)
 
-        if cachedir != '':
-            cup = CachedCertificateUpdater(cachedir)
+        if self.cachedir != '':
+            cup = CachedCertificateUpdater(self.cachedir)
         else:
             cup = CertificateUpdater()
         key = cup.get_key_coseobj(gpp.get_kid())
@@ -958,14 +958,38 @@ class LogicManager(object):
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--qr",          help="qrcodefile, png format")
-    parser.add_argument("--pdf",         help="qrcodefile, pdf format")
-    parser.add_argument("--txt",         help="read qrcode content from file")
-    parser.add_argument("--cachedir",    default=DEFAULT_CACHE_DIR, help="Cache directory, defaults to {}".format(DEFAULT_CACHE_DIR))
-    parser.add_argument("--raw",         action="store_true", help="print raw data of certificate in json format")
-    parser.add_argument("--settings",    action="store_true", help="Dump settings")
-    parser.add_argument("--no-color",    action="store_true", help="Disable color output")
-    parser.add_argument("--no-cache",    action="store_true", help="Do not use cache")
+
+    command = parser.add_mutually_exclusive_group(required=True)
+
+    command.add_argument("--settings",
+                         action="store_true",
+                         help="Dump VerificaC19 settings")
+
+    command.add_argument("--qr",
+                         help="qrcodefile, png format")
+
+    command.add_argument("--pdf",
+                         help="qrcodefile, pdf format")
+
+    command.add_argument("--txt",
+                         help="read qrcode content from file")
+
+    # Optional Parameters
+    parser.add_argument("--cachedir",
+                        default=DEFAULT_CACHE_DIR,
+                        help="Cache Dir, default:{}".format(DEFAULT_CACHE_DIR))
+
+    parser.add_argument("--raw",
+                        action="store_true",
+                        help="print raw data of certificate in json format")
+
+    parser.add_argument("--no-color",
+                        action="store_true",
+                        help="Disable color output")
+
+    parser.add_argument("--no-cache",
+                        action="store_true",
+                        help="Do not use cache")
 
     args = parser.parse_args()
 
@@ -996,13 +1020,6 @@ if __name__=="__main__":
         out.dump_settings()
         sys.exit(1)
 
-    if args.txt == None and \
-       args.pdf == None and \
-       args.qr  == None and \
-       args.settings == False:
-        parser.print_help()
-        sys.exit(1)
-
     data = InputTransformer(path, filetype).get_data()
     gpp = GreenPassParser(data)
     if args.raw:
@@ -1010,9 +1027,8 @@ if __name__=="__main__":
         sys.exit(1)
 
     out = OutputManager()
-    logic = LogicManager()
+    logic = LogicManager(cachedir)
     res = logic.verify_certificate(out)
 
     out.dump()
-
     sys.exit(res)
