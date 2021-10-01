@@ -1,6 +1,8 @@
 import sys
 from termcolor import colored
 
+from greenpass.data import *
+
 # Output Manager, manages output and dumps to files and stdout
 class OutputManager(object):
 
@@ -81,9 +83,7 @@ class OutputManager(object):
         print(self.out, file=file)
 
 
-    def dump_settings(self):
-        sm = SettingsManager()
-
+    def dump_settings(self, sm):
         print("Tests")
         for el in sm.test.items():
             print("  {} not before: {:4d} hours not after: {:4d} hours".format(
@@ -108,4 +108,7 @@ class OutputManager(object):
                     el[1]["start_day"], el[1]["end_day"]
                 ))
         print()
+
+    def rawdump(self, data):
+        print(data)
 
