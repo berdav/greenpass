@@ -666,7 +666,7 @@ class GreenPassKeyManager(object):
         return ( "dn", "Dose Number" )
 
     def get_total_doses(self):
-        return ( "sn", "Total Doses" )
+        return ( "sd", "Total Doses" )
 
     def get_vaccine_pn(self):
         return ( "mp", "Vaccine Product Number" )
@@ -682,6 +682,9 @@ class GreenPassKeyManager(object):
 
     def get_verified(self):
         return ( "", "Verified" )
+
+    def get_doses(self):
+        return ( "", "Doses" )
 
     def get_cert_type_long_name(self, t):
         if t == self.get_vaccine()[0]:
@@ -858,7 +861,7 @@ class LogicManager(object):
                     recovery_until = 0
                 certdate = recovery_from
             elif cert_info[0] == k.get_total_doses()[1]:
-                sd = cert_info[1]
+                sd = int(cert_info[1])
             elif cert_info[0] == k.get_vaccine_pn()[1]:
                 vaccine = cert_info[1]
                 output.add_cert_info_info(cert_info[0], Vaccine(cert_info[1]).get_pretty_name())
@@ -944,9 +947,9 @@ class LogicManager(object):
             output.add_general_info_error(k.get_verified()[1], verified)
 
         unknown_cert = gpp.certificate_type not in (
-                k.get_vaccine()[1],
-                k.get_test()[1],
-                k.get_recovery()[1]
+                k.get_vaccine()[0],
+                k.get_test()[0],
+                k.get_recovery()[0]
         )
 
         valid = verified and not expired and not positive and not unknown_cert
@@ -1008,7 +1011,8 @@ if __name__=="__main__":
 
     out = OutputManager()
     logic = LogicManager()
-    logic.verify_certificate(out)
+    res = logic.verify_certificate(out)
 
     out.dump()
+
     sys.exit(res)
