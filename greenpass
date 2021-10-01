@@ -41,16 +41,6 @@ from cose.keys import EC2Key, CoseKey
 from cose.headers import KID
 from cose.messages import CoseMessage
 
-# Colored output
-color = False
-# Settings output
-settings = False
-# QR Code file
-qrfile = None
-# Read text file from stdin
-txt = None
-# PDF File
-pdffile = None
 # Base url to retrieve data (DGC)
 BASE_URL_DGC   = "https://get.dgc.gov.it/v1/dgc/"
 # Base url to retrieve data (NHS)
@@ -982,30 +972,21 @@ if __name__=="__main__":
     parser.add_argument("--qr",          help="qrcodefile, png format")
     parser.add_argument("--pdf",         help="qrcodefile, pdf format")
     parser.add_argument("--txt",         help="read qrcode content from file")
+    parser.add_argument("--cachedir",    default=DEFAULT_CACHE_DIR, help="Cache directory, defaults to {}".format(DEFAULT_CACHE_DIR))
     parser.add_argument("--raw",         action="store_true", help="print raw data of certificate in json format")
     parser.add_argument("--settings",    action="store_true", help="Dump settings")
     parser.add_argument("--no-color",    action="store_true", help="Disable color output")
-    parser.add_argument("--cachedir",    help="Cache directory, defaults to {}".format(DEFAULT_CACHE_DIR))
     parser.add_argument("--no-cache",    action="store_true", help="Do not use cache")
 
     args = parser.parse_args()
 
-    txt = args.txt
-    raw = args.raw
-    qrfile = args.qr
-    pdffile = args.pdf
-    settings = args.settings
-    color = not args.no_color
-    cachedir = DEFAULT_CACHE_DIR
-    if args.cachedir != None:
-        cachedir = args.cachedir
-
+    cachedir = args.cachedir
     if args.no_cache:
         cachedir = ''
 
     res = -1
 
-    if color:
+    if not args.no_color:
         colorama.init()
         from termcolor import colored
     else:
@@ -1014,25 +995,28 @@ if __name__=="__main__":
 
     sm = SettingsManager(cachedir)
 
-    if qrfile != None:
-        (path, filetype) = (qrfile, "png")
-    if pdffile != None:
-        (path, filetype) = (pdffile, "pdf")
-    if txt != None and txt != "":
-        (path, filetype) = (txt, "txt")
+    if args.qr != None:
+        (path, filetype) = (args.qr, "png")
+    if args.pdf != None:
+        (path, filetype) = (args.pdf, "pdf")
+    if args.txt != None and args.txt != "":
+        (path, filetype) = (args.txt, "txt")
 
-    if settings != False:
+    if args.settings != False:
         out = OutputManager()
         out.dump_settings()
         sys.exit(1)
 
-    if txt == None and pdffile == None and qrfile == None and settings == False:
+    if args.txt == None and \
+       args.pdf == None and \
+       args.qr  == None and \
+       args.settings == False:
         parser.print_help()
         sys.exit(1)
 
     data = InputTransformer(path, filetype).get_data()
     gpp = GreenPassParser(data)
-    if raw:
+    if args.raw:
         gpp.dump(file=sys.stdout)
         sys.exit(1)
 
