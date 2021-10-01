@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from greenpass.output import OutputManager
+
 import io
 import os
 import re
@@ -52,112 +54,6 @@ DEFAULT_CACHE_DIR=functools.reduce(
     os.path.join,
     [ os.path.expanduser("~"), ".local", "greenpass" ]
 )
-
-# Output Manager, manages output and dumps to files and stdout
-class OutputManager(object):
-
-    def __init__(self):
-        self.out = ""
-
-    def add_general_info(self, infoname, infoval):
-        self.out += "{:30s} {}\n".format(infoname, infoval)
-
-    def add_cert_info(self, infoname, infoval):
-        self.out += "  {:28s} {}\n".format(infoname, infoval)
-
-    def add_general_info_ok(self, infoname, infoval):
-        self.add_general_info(infoname, colored(infoval, "green"))
-
-    def add_general_info_info(self, infoname, infoval):
-        self.add_general_info(infoname, colored(infoval, "blue"))
-
-    def add_general_info_warning(self, infoname, infoval):
-        self.add_general_info(infoname, colored(infoval, "yellow"))
-
-    def add_general_info_error(self, infoname, infoval):
-        self.add_general_info(infoname, colored(infoval, "red"))
-
-    def add_cert_info_ok(self, infoname, infoval):
-        self.add_cert_info(infoname, colored(infoval, "green"))
-
-    def add_cert_info_info(self, infoname, infoval):
-        self.add_cert_info(infoname, colored(infoval, "blue"))
-
-    def add_cert_info_warning(self, infoname, infoval):
-        self.add_cert_info(infoname, colored(infoval, "yellow"))
-
-    def add_cert_info_error(self, infoname, infoval):
-        self.add_cert_info(infoname, colored(infoval, "red"))
-
-    def add_remaining_time(self, certtype, certdate, level, remaining_days):
-        if level == 0:
-            color = "white"
-        if level == 1:
-            color = "green"
-        if level == 2:
-            color = "yellow"
-        if level == 3:
-            color = "red"
-
-        self.out += "  {:28s} {} ({})\n".format(
-            "{} Date".format(certtype),
-            colored(certdate, color), colored(remaining_days, color)
-        )
-
-    def get_not_yet_valid(self, remaining_hours):
-        return "Not yet valid, {:.0f} hours to validity, {} days".format(
-                hours_to_valid, int(hours_to_valid / 24)
-        )
-
-    def get_expired(self, remaining_hours):
-        return "Expired since {:.0f} hours, {} days".format(
-                    -remaining_hours,
-                    -int(remaining_hours / 24)
-                )
-    def get_hours_left(self, remaining_hours):
-        return "{:.0f} hours left ({} days)".format(
-                    remaining_hours,
-                    int(remaining_hours / 24)
-                )
-
-    def get_months_left(self, remaining_hours):
-        return "{:.0f} hours left, {} days, ~ {} months".format(
-                remaining_hours,
-                int(remaining_hours / 24),
-                round(remaining_hours / 24 / 30)
-        )
-
-    def dump(self, file=sys.stdout):
-        print(self.out, file=file)
-
-
-    def dump_settings(self):
-        sm = SettingsManager()
-
-        print("Tests")
-        for el in sm.test.items():
-            print("  {} not before: {:4d} hours not after: {:4d} hours".format(
-                colored("{:25s}".format(el[0]), "blue"),
-                el[1]["start_hours"],
-                el[1]["end_hours"])
-            )
-
-        print("\nCertifications")
-        print("  {} not before: {:4d} days  not after: {:4d} days".format(
-            colored("{:25s}".format("recovery"), "blue"),
-            sm.recovery["start_day"],
-            sm.recovery["end_day"])
-        )
-
-        print("\nVaccines")
-        for vac in sm.vaccines.items():
-            for el in vac[1].items():
-                print("  {} {} not before: {:4d} days  not after: {:4d} days".format(
-                    colored("{:12s}".format(el[0]), "blue"),
-                    colored("{:12s}".format(Vaccine(vac[0]).get_pretty_name()), "yellow"),
-                    el[1]["start_day"], el[1]["end_day"]
-                ))
-        print()
 
 class TestType(object):
     def __init__(self, t):
@@ -1031,7 +927,7 @@ if __name__=="__main__":
         (path, filetype) = (args.txt, "txt")
 
     if args.settings != False:
-        out = OutputManager()
+        out = OutputManager(colored)
         out.dump_settings()
         sys.exit(1)
 
@@ -1041,7 +937,7 @@ if __name__=="__main__":
         gpp.dump(file=sys.stdout)
         sys.exit(1)
 
-    out = OutputManager()
+    out = OutputManager(colored)
     logic = LogicManager(cachedir)
     res = logic.verify_certificate(out)
 
