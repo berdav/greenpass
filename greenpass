@@ -243,8 +243,7 @@ class Manufacturer(object):
     def get_cached_tests_pn(self, cachedir):
         testcache = os.path.join(cachedir, "tests")
 
-        if not os.path.exists(cachedir):
-            os.mkdir(cachedir)
+        os.makedirs(cachedir, exist_ok=True)
 
         if not os.path.exists(testcache):
             with open(testcache, 'wb') as f:
@@ -298,8 +297,7 @@ class SettingsManager(object):
     def get_cached_settings(self):
         settings = os.path.join(cachedir, "settings")
 
-        if not os.path.exists(cachedir):
-            os.mkdir(cachedir)
+        os.makedirs(cachedir, exist_ok=True)
 
         if not os.path.exists(settings):
             with open(settings, 'wb') as f:
@@ -533,11 +531,7 @@ class CertificateUpdater(object):
 class CachedCertificateUpdater(CertificateUpdater):
     def __init__(self, cachedir):
         self.cachedir = cachedir
-        if not os.path.exists(cachedir):
-            try:
-                os.mkdir(cachedir)
-            except FileExistsError:
-                pass
+        os.makedirs(cachedirs, exist_ok=True)
 
     def get_key(self, kid):
         enckid = base64.b64encode(kid).decode()
