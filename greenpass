@@ -136,27 +136,28 @@ class OutputManager(object):
 
         print("Tests")
         for el in sm.test.items():
-            print("  {} not before: {:4d} hours   not after: {:4d} hours".format(
-                colored("{:25s}".format(el[0]), "blue"), el[1]["start_hours"], el[1]["end_hours"])
+            print("  {} not before: {:4d} hours not after: {:4d} hours".format(
+                colored("{:25s}".format(el[0]), "blue"),
+                el[1]["start_hours"],
+                el[1]["end_hours"])
             )
-        print()
-        print("Certifications")
-        print("  {} not before: {:4d} days    not after: {:4d} days".format(
-            colored("{:25s}".format("recovery"), "blue"), sm.recovery["start_day"], sm.recovery["end_day"])
-        )
-        print()
 
-        print("Vaccines")
+        print("\nCertifications")
+        print("  {} not before: {:4d} days  not after: {:4d} days".format(
+            colored("{:25s}".format("recovery"), "blue"),
+            sm.recovery["start_day"],
+            sm.recovery["end_day"])
+        )
+
+        print("\nVaccines")
         for vac in sm.vaccines.items():
             for el in vac[1].items():
-                print("  {} {} not before: {:4d} days    not after: {:4d} days".format(
+                print("  {} {} not before: {:4d} days  not after: {:4d} days".format(
                     colored("{:12s}".format(el[0]), "blue"),
                     colored("{:12s}".format(Vaccine(vac[0]).get_pretty_name()), "yellow"),
                     el[1]["start_day"], el[1]["end_day"]
-                    )
-                )
+                ))
         print()
-
 
 class TestType(object):
     def __init__(self, t):
