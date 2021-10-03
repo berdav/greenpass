@@ -65,7 +65,7 @@ setup(
         'Development Status :: 3 - Alpha',
         'Environment :: Console',
         'Intended Audience :: Healthcare Industry',
-        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+        'License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)',
         'Topic :: Utilities',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4',
