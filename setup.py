@@ -16,24 +16,36 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import os
+import shutil
 from distutils.core import setup
 import setuptools
+
+maintool = "greenpass"
+
+build_scripts = os.path.join("build", "scripts")
+
+maintool_dst_path = os.path.join(build_scripts, maintool)
+
+os.makedirs(build_scripts, exist_ok=True)
+shutil.copyfile(maintool + ".py", maintool_dst_path)
 
 with open("README.md") as f:
     description = f.read()
 
 setup(
     name             = 'greenpass',
-    scripts          = [ "greenpass" ],
-    version          = '2.1',
+    scripts          = [ maintool_dst_path ],
+    version          = '3.1',
     license          = 'GPLv3',
     description      = 'Scriptable green pass verifier',
     long_description = description,
     long_description_content_type='text/markdown',
+    packages         = [ "greenpass" ],
     author           = 'Davide Berardi',
     author_email     = 'berardi.dav@gmail.com',
     url              = 'https://github.com/berdav/greenpass',
-    download_url     = 'https://github.com/berdav/greenpass/archive/refs/tags/v2.1.zip',
+    download_url     = 'https://github.com/berdav/greenpass/archive/refs/tags/v3.0.zip',
     keywords         = [ 'covid19', 'greenpass', 'certificates', 'authorization' ],
     install_requires = [
         'base45',
