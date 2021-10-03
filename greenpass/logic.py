@@ -177,7 +177,7 @@ class LogicManager(object):
 
         # Invalid GP, more than one certificate info
         if len(gpp.certificate_info) > 1:
-            return 1
+            return False
 
         el = gpp.certificate_info[0]
 
@@ -307,6 +307,5 @@ class LogicManager(object):
         )
 
         valid = verified and not expired and not positive and not unknown_cert
-        # Unix return code is inverted
-        return 1 - valid
+        return valid
 
