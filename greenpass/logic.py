@@ -1,3 +1,21 @@
+#!/usr/bin/env python3
+
+# Green Pass Parser
+# Copyright (C) 2021  Davide Berardi -- <berardi.dav@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import re
 import sys
 import zlib
@@ -42,7 +60,7 @@ class TestResult(object):
 class GreenPassParser(object):
     def __init__(self, certification, k=GreenPassKeyManager()):
         # Remove the initial HC1: part and decode the certificate
-        data = b":".join(certification.split(b":")[1::])
+        data = b":".join(certification.strip().split(b":")[1::])
         decoded = base45.b45decode(data)
         uncompressed = zlib.decompress(decoded)
 

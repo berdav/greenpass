@@ -16,7 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# Base url to retrieve data (DGC)
-BASE_URL_DGC   = "https://get.dgc.gov.it/v1/dgc/"
-# Base url to retrieve data (NHS)
-BASE_URL_NHS   = "https://covid-status.service.nhsx.nhs.uk/"
+from greenpass.settings import *
+from greenpass.output import *
+
+if __name__ == "__main__":
+    sm = SettingsManager("")
+    out = OutputManager(lambda x,y: x)
+    out.dump_settings(sm)
