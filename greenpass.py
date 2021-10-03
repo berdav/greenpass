@@ -113,5 +113,11 @@ if __name__=="__main__":
         cup = CertificateUpdater()
     res = logic.verify_certificate(out, gpp, sm, cup)
 
+    # Unix return code is inverted
+    if res:
+        retval = 0
+    else:
+        retval = 1
+
     out.dump()
-    sys.exit(res)
+    sys.exit(retval)
