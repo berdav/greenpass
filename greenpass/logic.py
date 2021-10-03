@@ -206,7 +206,10 @@ class LogicManager(object):
                 t = TestResult(int(cert_info[1]))
                 # Strict check, also unknown do not get validated
                 positive = not t.is_negative()
-                output.add_cert_info(cert_info[0], t)
+                if positive:
+                    output.add_cert_info_error(cert_info[0], t)
+                else:
+                    output.add_cert_info_ok(cert_info[0], t)
             elif cert_info[0] == k.get_validity_from()[1]:
                 try:
                     recovery_from = datetime.strptime(cert_info[1], "%Y-%m-%d")
