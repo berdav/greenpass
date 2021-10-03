@@ -16,7 +16,32 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# Base url to retrieve data (DGC)
-BASE_URL_DGC   = "https://get.dgc.gov.it/v1/dgc/"
-# Base url to retrieve data (NHS)
-BASE_URL_NHS   = "https://covid-status.service.nhsx.nhs.uk/"
+import sys
+
+from greenpass.input import *
+from greenpass.logic import *
+from greenpass.settings import *
+from greenpass.api import *
+from greenpass.output import *
+
+if __name__ == "__main__":
+    out = True
+    sm = SettingsManager('')
+    om = NoneOutput()
+    logic = LogicManager('')
+    cup = CertificateUpdater()
+    for i in sys.argv[1::]:
+        try:
+            data = InputTransformer(i, 'png').get_data()
+            gpp = GreenPassParser(data)
+            res = logic.verify_certificate(om, gpp, sm, cup)
+        except:
+            res = False
+        if res:
+            print("[+] Valid     {}".format(i))
+        else:
+            print("[-] Not Valid {}".format(i))
+
+        out = out and res
+
+    sys.exit(out)

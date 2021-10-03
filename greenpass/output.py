@@ -1,10 +1,86 @@
+#!/usr/bin/env python3
+
+# Green Pass Parser
+# Copyright (C) 2021  Davide Berardi -- <berardi.dav@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import sys
 from termcolor import colored
 
 from greenpass.data import *
 
+class NoneOutput(object):
+    def __init__(self, colored=colored):
+        pass
+
+    def add_general_info(self, infoname, infoval):
+        pass
+
+    def add_cert_info(self, infoname, infoval):
+        pass
+
+    def add_general_info_ok(self, infoname, infoval):
+        pass
+
+    def add_general_info_info(self, infoname, infoval):
+        pass
+
+    def add_general_info_warning(self, infoname, infoval):
+        pass
+
+    def add_general_info_error(self, infoname, infoval):
+        pass
+
+    def add_cert_info_ok(self, infoname, infoval):
+        pass
+
+    def add_cert_info_info(self, infoname, infoval):
+        pass
+
+    def add_cert_info_warning(self, infoname, infoval):
+        pass
+
+    def add_cert_info_error(self, infoname, infoval):
+        pass
+
+    def add_remaining_time(self, certtype, certdate, level, remaining_days):
+        pass
+
+    def get_not_yet_valid(self, remaining_hours):
+        pass
+
+    def get_expired(self, remaining_hours):
+        pass
+
+    def get_hours_left(self, remaining_hours):
+        pass
+
+    def get_months_left(self, remaining_hours):
+        pass
+
+    def dump(self, file=sys.stdout):
+        pass
+
+    def dump_settings(self, sm):
+        pass
+
+    def rawdump(self, data):
+        pass
+
 # Output Manager, manages output and dumps to files and stdout
-class OutputManager(object):
+class OutputManager(NoneOutput):
 
     def __init__(self, colored=colored):
         self.out = ""
