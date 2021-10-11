@@ -87,7 +87,7 @@ class GreenPassKeyManager(object):
         return ( "df", "Validity From" )
 
     def get_validity_until(self):
-        return ( "df", "Validity Until" )
+        return ( "du", "Validity Until" )
 
     def get_manufacturer(self):
         return ( "ma", "Manufacturer and Type" )
