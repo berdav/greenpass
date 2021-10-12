@@ -36,7 +36,7 @@ with open("README.md") as f:
 setup(
     name             = 'greenpass',
     scripts          = [ maintool_dst_path ],
-    version          = '3.2',
+    version          = '3.3',
     license          = 'LGPLv3',
     description      = 'Scriptable green pass verifier',
     long_description = description,
