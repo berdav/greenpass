@@ -45,7 +45,7 @@ setup(
     author           = 'Davide Berardi',
     author_email     = 'berardi.dav@gmail.com',
     url              = 'https://github.com/berdav/greenpass',
-    download_url     = 'https://github.com/berdav/greenpass/archive/refs/tags/v3.2.zip',
+    download_url     = 'https://github.com/berdav/greenpass/archive/refs/tags/v3.3.zip',
     keywords         = [ 'covid19', 'greenpass', 'certificates', 'authorization' ],
     install_requires = [
         'base45',
