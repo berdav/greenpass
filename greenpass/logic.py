@@ -294,8 +294,7 @@ class LogicManager(object):
         if hours_to_valid != None and remaining_hours != None:
             if hours_to_valid < 0:
                 level = 3
-                remaining_hours = output.get_not_yet_valid(hours_to_valid)
-                remaining_days = output.get_not_yet_valid(hours_to_valid)
+                remaining_days = output.get_not_yet_valid(-hours_to_valid)
                 expired = True
             elif remaining_hours <= 0:
                 level = 3
