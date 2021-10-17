@@ -132,7 +132,7 @@ class OutputManager(NoneOutput):
             self.colored(remaining_days, color)
         )
 
-    def get_not_yet_valid(self, remaining_hours):
+    def get_not_yet_valid(self, hours_to_valid):
         return "Not yet valid, {:.0f} hours to validity, {} days".format(
                 hours_to_valid, int(hours_to_valid / 24)
         )
