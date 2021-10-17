@@ -184,11 +184,15 @@ class Manufacturer(object):
     def get_tests_pn(self):
         o = {}
         r = requests.get(TESTS_URL)
+        print(r.text)
         if r.status_code != 200:
             return o
-        l = json.loads(r.text)
-        for el in l:
-            o[el["id_device"]] = el["commercial_name"]
+        try:
+            l = json.loads(r.text)
+            for el in l:
+                o[el["id_device"]] = el["commercial_name"]
+        except:
+            pass
 
         return o
 
