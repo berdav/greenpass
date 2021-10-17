@@ -183,8 +183,7 @@ class Manufacturer(object):
 
     def get_tests_pn(self):
         o = {}
-        r = requests.get(TESTS_URL)
-        print(r.text)
+        r = requests.get(TESTS_URL, allow_redirects=True, timeout=10)
         if r.status_code != 200:
             return o
         try:
