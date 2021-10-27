@@ -52,10 +52,12 @@ class CertificateUpdater(object):
         for x in json.loads(r.text):
             if _type == "dgc":
                 targetkid = hexlify(base64.b64decode(x))
+                out = i
             if _type == "nhs":
                 targetkid = hexlify(base64.b64decode(x["kid"]))
+                out = targetkid
             if targetkid == hexkid:
-                return (_type, i)
+                return (_type, out)
             i += 1
         return (_type, -1)
 
@@ -103,16 +105,19 @@ class CertificateUpdater(object):
             subject = ' '.join(map(lambda x: x[1].decode(), x509.get_subject().get_components()))
             print("[ ] Signed with public key from")
             print("    {}".format(subject))
-
-        pubkey = crypto.dump_publickey(crypto.FILETYPE_ASN1, x509.get_pubkey())[26::]
+        pubkey = crypto.dump_publickey(crypto.FILETYPE_ASN1, x509.get_pubkey())
         return pubkey
+
+    def extractpubkey(self, pubkey):
+        return pubkey[26::]
 
     # Get key from NHS style repository
     def get_key_nhs(self, idx):
         r = requests.get("{}/pubkeys/keys.json".format(BASE_URL_NHS))
         for x in json.loads(r.text):
             targetkid = hexlify(base64.b64decode(x["kid"]))
-            if targetkid == hexkid:
+
+            if targetkid == idx:
                 return base64.b64decode(x["publicKey"])
 
     # Retrieve key from remote repository
@@ -121,14 +126,17 @@ class CertificateUpdater(object):
 
         if keytype == "nhs":
             pubkey = self.get_key_nhs(idx)
+            pubkey = self.extractpubkey(pubkey)
         elif keytype == "dgc":
-            pubkey = self.get_key_dgc(kid)
+            certificate = self.get_key_dgc(kid)
+            pubkey = self.loadpubkey(certificate)
+            pubkey = self.extractpubkey(pubkey)
+
         return pubkey
 
     # Retrieve key and convert to coseobj
     def get_key_coseobj(self, kid):
-        certificate = self.get_key(kid)
-        pubkey = self.loadpubkey(certificate)
+        pubkey = self.get_key(kid)
         return self.getcoseobj(pubkey)
 
     # Return COSE object from public key
