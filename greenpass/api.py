@@ -133,7 +133,8 @@ class CachedCertificateUpdater(CertificateUpdater):
         os.makedirs(cachedir, exist_ok=True)
 
     def get_key(self, kid):
-        enckid = base64.b64encode(kid).decode()
+        # Replace / with a value that cannot be found in base64
+        enckid = base64.b64encode(kid).decode().replace("/", ".")
         cachepath = os.path.join(self.cachedir, enckid)
         superclass = super(CachedCertificateUpdater, self)
 
