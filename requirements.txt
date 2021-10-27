@@ -1,4 +1,5 @@
 base45
+bs4
 cbor2
 colorama
 Pillow

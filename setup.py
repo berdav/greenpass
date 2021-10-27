@@ -49,6 +49,7 @@ setup(
     keywords         = [ 'covid19', 'greenpass', 'certificates', 'authorization' ],
     install_requires = [
         'base45',
+        'bs4',
         'PyMuPDF',
         'pytz',
         'cbor2',
