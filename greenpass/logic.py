@@ -68,7 +68,7 @@ class GreenPassParser(object):
         self.cose = CoseMessage.decode(uncompressed)
 
         # Extract kid and payload
-        self.kid = self.get_kid_from_cose(self.cose.phdr)
+        self.kid = self.get_kid_from_cose(self.cose.phdr, self.cose.uhdr)
         self.payload = cbor2.loads(self.cose.payload)
 
         self.qr_info = {
@@ -127,10 +127,13 @@ class GreenPassParser(object):
             self.certificate_info.append(cert)
 
     # Isolate KID from COSE object
-    def get_kid_from_cose(self, phdr):
+    def get_kid_from_cose(self, phdr, uhdr):
         for k in phdr.keys():
             if (k == type(KID())):
                 return phdr[k]
+        for k in uhdr.keys():
+            if (k == type(KID())):
+                return uhdr[k]
         print("Could not find KID", file=sys.stderr)
         return None
 
