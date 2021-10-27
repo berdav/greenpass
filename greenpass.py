@@ -69,6 +69,13 @@ if __name__=="__main__":
                         action="store_true",
                         help="Do not use cache")
 
+    parser.add_argument("--key",
+                        help="Public certificate to verify the greenpass with")
+
+    parser.add_argument("--verbose",
+                        action="store_true",
+                        help="Print more information")
+
     args = parser.parse_args()
 
     cachedir = args.cachedir
@@ -107,10 +114,17 @@ if __name__=="__main__":
         sys.exit(1)
 
     logic = LogicManager(cachedir)
-    if cachedir != '':
+
+    if args.key != None:
+        cup = ForcedCertificateUpdater(args.key)
+    elif cachedir != '':
         cup = CachedCertificateUpdater(cachedir)
     else:
         cup = CertificateUpdater()
+
+    if args.verbose:
+        cup.set_verbose()
+
     res = logic.verify_certificate(out, gpp, sm, cup)
 
     # Unix return code is inverted

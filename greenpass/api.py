@@ -23,6 +23,7 @@ import base64
 import requests
 from OpenSSL import crypto
 from binascii import hexlify
+from bs4 import BeautifulSoup
 from cose.keys import EC2Key, CoseKey
 
 from greenpass.URLs import *
@@ -30,7 +31,10 @@ from greenpass.URLs import *
 # Update certificate signer
 class CertificateUpdater(object):
     def __init__(self):
-        pass
+        self.verbose = False
+
+    def set_verbose(self):
+        self.verbose = True
 
     # Get KEY index from online status page
     def _get_kid_idx(self, kid, _type="dgc"):
@@ -61,6 +65,9 @@ class CertificateUpdater(object):
         if k[1] != -1:
             return k
         k = self._get_kid_idx(kid, "dgc")
+        if self.verbose:
+            print("[ ] Kid: {} idx: {}".format(base64.b64encode(kid), k[1]))
+
         if k[1] != -1:
             return k
 
@@ -69,19 +76,34 @@ class CertificateUpdater(object):
 
     # Get key from DGC style repository
     def get_key_dgc(self, idx):
-        headers = { "x-resume-token": str(idx) }
-        r = requests.get("{}/signercertificate/update".format(BASE_URL_DGC), headers=headers)
+        certificate = None
+        r = requests.get("{}".format(BASE_URL_DGCG))
         if r.status_code != 200:
             print("[-] Error from API")
             sys.exit(1)
 
-        certificate = base64.b64decode(r.text)
+        soup = BeautifulSoup(r.text, 'html.parser')
+        trust_list_json = soup.find("code", {"id": "trust-list-json"})
+        trust_list = json.loads(trust_list_json.string)
+        target = base64.b64encode(idx).decode()
+        for country in trust_list["dsc_trust_list"].values():
+            for el in country["keys"]:
+                if el["kid"] == target:
+                    certificate = base64.b64decode(el["x5c"][0])
+                    break
+
         return certificate
 
     # Return public key
     def loadpubkey(self, certificate):
         # Load certificate and dump the pubkey
         x509 = crypto.load_certificate(crypto.FILETYPE_ASN1, certificate)
+
+        if self.verbose:
+            subject = ' '.join(map(lambda x: x[1].decode(), x509.get_subject().get_components()))
+            print("[ ] Signed with public key from")
+            print("    {}".format(subject))
+
         pubkey = crypto.dump_publickey(crypto.FILETYPE_ASN1, x509.get_pubkey())[26::]
         return pubkey
 
@@ -97,10 +119,10 @@ class CertificateUpdater(object):
     def get_key(self, kid):
         keytype, idx = self.get_kid_idx(kid)
 
-        if keytype == "dgc":
-            pubkey = self.get_key_dgc(idx)
-        elif keytype == "nhs":
+        if keytype == "nhs":
             pubkey = self.get_key_nhs(idx)
+        elif keytype == "dgc":
+            pubkey = self.get_key_dgc(kid)
         return pubkey
 
     # Retrieve key and convert to coseobj
@@ -131,6 +153,7 @@ class CachedCertificateUpdater(CertificateUpdater):
     def __init__(self, cachedir):
         self.cachedir = cachedir
         os.makedirs(cachedir, exist_ok=True)
+        super(CachedCertificateUpdater, self).__init__()
 
     def get_key(self, kid):
         # Replace / with a value that cannot be found in base64
@@ -147,3 +170,13 @@ class CachedCertificateUpdater(CertificateUpdater):
 
         return keybytes
 
+class ForcedCertificateUpdater(CertificateUpdater):
+    def __init__(self, path):
+        self.keypath = path
+        super(ForcedCertificateUpdater, self).__init__()
+
+    def get_key(self, _kid):
+        with open(self.keypath, "rb") as f:
+            keybytes = f.read()
+
+        return keybytes

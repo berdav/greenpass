@@ -165,7 +165,8 @@ class LogicManager(object):
                            sm,
                            cup,
                            raw=False,
-                           k=GreenPassKeyManager()):
+                           k=GreenPassKeyManager(),
+                           verificator_key=None):
         dn = -1
         sd = -1
 
