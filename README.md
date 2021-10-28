@@ -79,7 +79,7 @@ greenpass --qr greenpass.png --dump-sign
 
 Print the key which the greenpass was signed with
 ```bash
-greenpass --qr greenpass.png --verbose
+greenpass --qr greenpass.png --verbose --no-cache
 ```
 
 ## Switches
