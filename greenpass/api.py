@@ -140,16 +140,40 @@ class CertificateUpdater(object):
         except:
             pubkey = certificate
 
-        pubkey = self.extractpubkey(pubkey)
         return pubkey
 
     # Retrieve key and convert to coseobj
-    def get_key_coseobj(self, kid):
+    def get_key_coseobj(self, kid, alg="ES256"):
         pubkey = self.get_key(kid)
-        return self.getcoseobj(pubkey)
+        return self.getcoseobj(pubkey, alg)
 
     # Return COSE object from public key
-    def getcoseobj(self, pubkey):
+    def getcoseobj(self, pubkey, alg="ES256"):
+        if self.verbose:
+            print("[ ] Algorithm: {}".format(alg))
+
+        if alg == "ES256":
+            return self._get_es256_cose_obj(pubkey)
+        if alg == "PS256":
+            return self._get_ps256_cose_obj(pubkey)
+        print("[ ] Unknown algorithm: {}".format(alg), file=sys.stderr)
+        return None
+
+    def _get_ps256_cose_obj(self, pubkey):
+        # Get N and E from the key
+        n = pubkey[32:-5]
+        e = pubkey[-3::]
+        kattr = {
+                "KTY":    "RSA",
+                "CURVE":  "P_256",
+                "ALG":    "PS256",
+                "E": e,
+                "N": n
+        }
+        return CoseKey.from_dict(kattr)
+
+    def _get_es256_cose_obj(self, pubkey):
+        pubkey = self.extractpubkey(pubkey)
         # X is the first 32 bits, Y are the remaining ones
         x = pubkey[1:int(len(pubkey)/2) + 1]
         y = pubkey[int(len(pubkey)/2) + 1::]

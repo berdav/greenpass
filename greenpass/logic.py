@@ -24,7 +24,7 @@ import json
 import cbor2
 import pytz
 from datetime import datetime
-from cose.headers import KID
+from cose.headers import KID, Algorithm
 from cose.messages import CoseMessage
 
 from greenpass.data import *
@@ -148,6 +148,21 @@ class GreenPassParser(object):
     # Get Key ID from the QRCode
     def get_kid(self):
         return self.kid
+
+    def get_sign_alg(self):
+        alg = None
+        for k in self.cose.phdr.keys():
+            if (k == type(Algorithm())):
+                alg = self.cose.phdr[k]
+        for k in self.cose.uhdr.keys():
+            if (k == type(Algorithm())):
+                alg = self.coseuhdr[k]
+
+        if alg == None:
+            print("Could not find Algorithm", file=sys.stderr)
+            return None
+
+        return alg.fullname
 
     # Set the decryption key
     def set_key(self, key):
@@ -323,7 +338,8 @@ class LogicManager(object):
                 expired = False
 
             output.add_remaining_time(certificate_type, certdate, level, remaining_days)
-        key = cup.get_key_coseobj(gpp.get_kid())
+        alg = gpp.get_sign_alg()
+        key = cup.get_key_coseobj(gpp.get_kid(), alg=alg)
         gpp.set_key(key)
         verified = gpp.verify()
 
