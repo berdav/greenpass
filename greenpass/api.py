@@ -121,17 +121,26 @@ class CertificateUpdater(object):
                 return base64.b64decode(x["publicKey"])
 
     # Retrieve key from remote repository
-    def get_key(self, kid):
+    def get_certificate(self, kid):
         keytype, idx = self.get_kid_idx(kid)
 
         if keytype == "nhs":
-            pubkey = self.get_key_nhs(idx)
-            pubkey = self.extractpubkey(pubkey)
+            certificate = self.get_key_nhs(idx)
         elif keytype == "dgc":
             certificate = self.get_key_dgc(kid)
-            pubkey = self.loadpubkey(certificate)
-            pubkey = self.extractpubkey(pubkey)
 
+        return certificate
+
+    def get_key(self, kid):
+        certificate = self.get_certificate(kid)
+
+        # Try to load the certificate
+        try:
+            pubkey = self.loadpubkey(certificate)
+        except:
+            pubkey = certificate
+
+        pubkey = self.extractpubkey(pubkey)
         return pubkey
 
     # Retrieve key and convert to coseobj
@@ -163,7 +172,7 @@ class CachedCertificateUpdater(CertificateUpdater):
         os.makedirs(cachedir, exist_ok=True)
         super(CachedCertificateUpdater, self).__init__()
 
-    def get_key(self, kid):
+    def get_certificate(self, kid):
         # Replace / with a value that cannot be found in base64
         enckid = base64.b64encode(kid).decode().replace("/", ".")
         cachepath = os.path.join(self.cachedir, enckid)
@@ -171,7 +180,7 @@ class CachedCertificateUpdater(CertificateUpdater):
 
         if not os.path.exists(cachepath):
             with open(cachepath, "wb") as f:
-                f.write(superclass.get_key(kid))
+                f.write(superclass.get_certificate(kid))
 
         with open(cachepath, "rb") as f:
             keybytes = f.read()
@@ -183,7 +192,7 @@ class ForcedCertificateUpdater(CertificateUpdater):
         self.keypath = path
         super(ForcedCertificateUpdater, self).__init__()
 
-    def get_key(self, _kid):
+    def get_certificate(self, _kid):
         with open(self.keypath, "rb") as f:
             keybytes = f.read()
 
