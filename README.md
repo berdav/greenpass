@@ -72,6 +72,16 @@ greenpass --settings
 ```
 ![Settings screen](https://github.com/berdav/greenpass/blob/master/img/settings.png?raw=true)
 
+Debug the cryptographic part of your greenpass
+```bash
+greenpass --qr greenpass.png --dump-sign
+```
+
+Print the key which the greenpass was signed with
+```bash
+greenpass --qr greenpass.png --verbose
+```
+
 ## Switches
 ```bash
 -h --help

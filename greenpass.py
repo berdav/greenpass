@@ -76,6 +76,10 @@ if __name__=="__main__":
                         action="store_true",
                         help="Print more information")
 
+    parser.add_argument("--dump-sign",
+                        action="store_true",
+                        help="Dump the signature included in the certificate")
+
     args = parser.parse_args()
 
     cachedir = args.cachedir
@@ -124,6 +128,12 @@ if __name__=="__main__":
 
     if args.verbose:
         cup.set_verbose()
+
+    if args.dump_sign:
+        signature = gpp.get_sign_from_cose()
+        phdr, uhdr = gpp.get_headers_from_cose()
+        out.dump_cose(phdr, uhdr, signature)
+        sys.exit(1)
 
     res = logic.verify_certificate(out, gpp, sm, cup)
 

@@ -126,6 +126,14 @@ class GreenPassParser(object):
             }
             self.certificate_info.append(cert)
 
+    # Return the signature from COSE object
+    def get_sign_from_cose(self):
+        return self.cose.signature
+
+    # Return the headers from COSE object
+    def get_headers_from_cose(self):
+        return self.cose.phdr, self.cose.uhdr
+
     # Isolate KID from COSE object
     def get_kid_from_cose(self, phdr, uhdr):
         for k in phdr.keys():

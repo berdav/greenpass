@@ -76,6 +76,9 @@ class NoneOutput(object):
     def dump_settings(self, sm):
         pass
 
+    def dump_cose(self, signature, phdr, uhdr):
+        pass
+
     def rawdump(self, data):
         pass
 
@@ -184,6 +187,11 @@ class OutputManager(NoneOutput):
                     el[1]["start_day"], el[1]["end_day"]
                 ))
         print()
+
+    def dump_cose(self, phdr, uhdr, signature):
+        print(self.colored("PHDR:", "green"), phdr)
+        print(self.colored("UHDR:", "red"),   uhdr)
+        print(self.colored("Sign:", "cyan"),  signature)
 
     def rawdump(self, data):
         print(data)
