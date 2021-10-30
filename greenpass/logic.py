@@ -291,7 +291,8 @@ class LogicManager(object):
                     testcollectiondate = 0
                 certdate = testcollectiondate
             elif cert_info[0] == k.get_manufacturer()[1]:
-                output.add_cert_info_info(cert_info[0], Manufacturer(cert_info[1]).get_pretty_name())
+                name = Manufacturer(cert_info[1], self.cachedir).get_pretty_name()
+                output.add_cert_info_info(cert_info[0], name)
             elif cert_info[0] == k.get_target_disease()[1]:
                 output.add_cert_info_info(cert_info[0], Disease(cert_info[1]).get_pretty_name())
             elif cert_info[0] == k.get_certificate_id()[1]:
