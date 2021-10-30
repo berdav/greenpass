@@ -208,6 +208,8 @@ class LogicManager(object):
         testtype = None
         remaining_hours = None
 
+        blocklisted = False
+
         certificate_type = k.get_cert_type_long_name(gpp.certificate_type)
         output.add_general_info_info(k.get_certificate_type()[1], certificate_type)
 
@@ -292,6 +294,13 @@ class LogicManager(object):
                 output.add_cert_info_info(cert_info[0], Manufacturer(cert_info[1]).get_pretty_name())
             elif cert_info[0] == k.get_target_disease()[1]:
                 output.add_cert_info_info(cert_info[0], Disease(cert_info[1]).get_pretty_name())
+            elif cert_info[0] == k.get_certificate_id()[1]:
+                output.add_cert_info(cert_info[0], cert_info[1])
+                blocklisted = sm.check_uvci_blocklisted(cert_info[1])
+                if (blocklisted):
+                    output.add_cert_info_error("Blocklisted", "True")
+                else:
+                    output.add_cert_info_ok("Blocklisted", "False")
             else:
                 output.add_cert_info(cert_info[0], cert_info[1])
 
@@ -354,6 +363,6 @@ class LogicManager(object):
                 k.get_recovery()[0]
         )
 
-        valid = verified and not expired and not positive and not unknown_cert
+        valid = verified and not expired and not positive and not unknown_cert and not blocklisted
         return valid
 

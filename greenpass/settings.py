@@ -30,6 +30,7 @@ from greenpass.URLs import *
 class SettingsManager(object):
     def __init__(self, cachedir=''):
         self.cachedir = cachedir
+        self.blocklist = set()
         if cachedir != '':
             self.get_cached_settings()
         else:
@@ -45,7 +46,7 @@ class SettingsManager(object):
                 pickle.dump(self.get_settings(), f)
 
         with open(settings, 'rb') as f:
-            self.vaccines, self.recovery, self.test = pickle.load(f)
+            self.vaccines, self.recovery, self.test, self.blocklist = pickle.load(f)
 
     def get_settings(self):
         r = requests.get("{}/settings".format(BASE_URL_DGC))
@@ -108,9 +109,11 @@ class SettingsManager(object):
             elif "ios" == el["name"] or "android" == el["name"]:
                 # Ignore app specific options
                 pass
+            elif "black_list_uvci" == el["name"]:
+                self.blocklist = self.blocklist.union( set(el["value"].split(";")[:-1]) )
             else:
                 print("[~] Unknown field {}".format(el["name"]))
-        return self.vaccines, self.recovery, self.test
+        return self.vaccines, self.recovery, self.test, self.blocklist
 
     # Return the time that a test is still valid, negative time if expired
     def get_test_remaining_time(self, test_date, ttype):
@@ -172,3 +175,8 @@ class SettingsManager(object):
 
         return int(valid_start), int(valid_end)
 
+    def get_blocklist(self):
+        return self.blocklist
+
+    def check_uvci_blocklisted(self, uvci):
+        return uvci in self.blocklist

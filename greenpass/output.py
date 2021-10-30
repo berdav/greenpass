@@ -186,6 +186,10 @@ class OutputManager(NoneOutput):
                     self.colored("{:12s}".format(Vaccine(vac[0]).get_pretty_name()), "yellow"),
                     el[1]["start_day"], el[1]["end_day"]
                 ))
+
+        print("\nBlocked Pass IDs")
+        for gp in sm.blocklist:
+            print("  {}".format(gp))
         print()
 
     def dump_cose(self, phdr, uhdr, signature):
