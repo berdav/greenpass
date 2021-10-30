@@ -24,6 +24,7 @@ from greenpass.logic import *
 from greenpass.settings import *
 
 import os
+import shutil
 import argparse
 import colorama
 import functools
@@ -69,6 +70,10 @@ if __name__=="__main__":
                         action="store_true",
                         help="Do not use cache")
 
+    parser.add_argument("--clear-cache",
+                        action="store_true",
+                        help="Remove the cache directory")
+
     parser.add_argument("--key",
                         help="Public certificate to verify the greenpass with")
 
@@ -85,6 +90,9 @@ if __name__=="__main__":
     cachedir = args.cachedir
     if args.no_cache:
         cachedir = ''
+
+    if cachedir and args.clear_cache:
+        shutil.rmtree(cachedir)
 
     res = -1
 

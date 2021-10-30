@@ -130,7 +130,12 @@ Disable colored output.
 ```bash
 --no-cache
 ```
-Disable cache, redownload everything.
+Disable cache, download everything without saving it.
+
+```bash
+--clear-cache
+```
+Redownload the entire cache, useful to update settings.
 
 ```bash
 --key KEY
