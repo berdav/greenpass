@@ -41,7 +41,7 @@ class InputTransformer(object):
             elif filetype == "pdf":
                 # Convert PDF to JPG
                 pdf_file = fitz.open(path)
-                imagebytes = pdf_file.extractImage(6)["image"]
+                imagebytes = pdf_file.extract_image(6)["image"]
                 img = Image.open(io.BytesIO(imagebytes))
             else:
                 print("[-] file format {} not recognized".format(filetype), file=sys.stderr)
