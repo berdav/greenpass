@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import re
 import os
 import sys
 import pickle
@@ -23,12 +24,14 @@ import pytz
 import json
 import requests
 from datetime import datetime
+from tzlocal import get_localzone
 
 from greenpass.URLs import *
 
 # Retrieve settings from unified API endpoint
 class SettingsManager(object):
     def __init__(self, cachedir=''):
+        self.at_date = None
         self.cachedir = cachedir
         self.blocklist = set()
         if cachedir != '':
@@ -120,7 +123,7 @@ class SettingsManager(object):
         hours = self.test.get(ttype, 0)
 
         try:
-            seconds_since_test = (datetime.now(pytz.utc) - test_date).total_seconds()
+            seconds_since_test = (self.checktime() - test_date).total_seconds()
             hours_since_test = seconds_since_test / (60 * 60)
         except Exception as e:
             print(e, file=sys.stderr)
@@ -142,7 +145,7 @@ class SettingsManager(object):
         days = self.vaccines.get(vtype, { "complete": 0, "not_complete": 0})[selector]
 
         try:
-            seconds_since_vaccine = (datetime.now(pytz.utc) - vaccination_date).total_seconds()
+            seconds_since_vaccine = (self.checktime() - vaccination_date).total_seconds()
             hours_since_vaccine = seconds_since_vaccine / (60 * 60)
         except Exception as e:
             print(e, file=sys.stderr)
@@ -159,7 +162,7 @@ class SettingsManager(object):
         days = self.recovery
 
         try:
-            seconds_since_recovery = (datetime.now(pytz.utc) - recovery_from).total_seconds()
+            seconds_since_recovery = (self.checktime() - recovery_from).total_seconds()
             hours_since_recovery = seconds_since_recovery / (60 * 60)
         except Exception as e:
             print(e, file=sys.stderr)
@@ -168,7 +171,7 @@ class SettingsManager(object):
         valid_start = (hours_since_recovery - days["start_day"] * 24)
         valid_end   = (days["end_day"] * 24 - hours_since_recovery)
 
-        valid_until = (recovery_until - datetime.now(pytz.utc)).total_seconds()
+        valid_until = (recovery_until - self.checktime()).total_seconds()
         valid_until = valid_until / (60 * 60)
 
         valid_end = min(valid_end, valid_until)
@@ -180,3 +183,37 @@ class SettingsManager(object):
 
     def check_uvci_blocklisted(self, uvci):
         return uvci in self.blocklist
+
+    def checktime(self):
+        if self.at_date == None:
+            d = datetime.now(pytz.utc)
+        else:
+            d = self.at_date
+        print(d)
+
+        return d
+
+    def set_at_date(self, at_date):
+        tz = get_localzone()
+        # Sanity check to see which are the value inputted
+        # Date time, seconds and timezone
+        if re.match(r"\d{4}-\d{2}-\d{2}-\d{2}:\d{2}:\d{2}[+-][:0-9]{2,4}", at_date):
+            self.at_date = datetime.strptime(at_date, "%Y-%m-%d-%H:%M:%S%z")
+        # Date, time and timezone
+        elif re.match(r"\d{4}-\d{2}-\d{2}-\d{2}:\d{2}[+-][:0-9]{2,4}", at_date):
+            self.at_date = datetime.strptime(at_date, "%Y-%m-%d-%H:%M%z")
+        # Date time and seconds
+        elif re.match(r"\d{4}-\d{2}-\d{2}-\d{2}:\d{2}:\d{2}", at_date):
+            self.at_date = datetime.strptime(at_date, "%Y-%m-%d-%H:%M:%S")
+            self.at_date = self.at_date.replace(tzinfo=tz)
+        # Date and time
+        elif re.match(r"\d{4}-\d{2}-\d{2}-\d{2}:\d{2}", at_date):
+            self.at_date = datetime.strptime(at_date, "%Y-%m-%d-%H:%M")
+            self.at_date = self.at_date.replace(tzinfo=tz)
+        # Only the date
+        elif   re.match(r"\d{4}-\d{2}-\d{2}", at_date):
+            self.at_date = datetime.strptime(at_date, "%Y-%m-%d")
+            self.at_date = self.at_date.replace(tzinfo=tz)
+        else:
+            print("[-] Unrecognized time format {}".format(at_date))
+            sys.exit(1)

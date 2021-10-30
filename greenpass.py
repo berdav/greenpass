@@ -89,6 +89,9 @@ if __name__=="__main__":
                         action="store_true",
                         help="Do not consider block list")
 
+    parser.add_argument("--at-date",
+                        help="Use AT_DATE instead of the current date")
+
     args = parser.parse_args()
 
     cachedir = args.cachedir
@@ -108,6 +111,9 @@ if __name__=="__main__":
         colored=lambda x,y: x
 
     sm = SettingsManager(cachedir)
+
+    if args.at_date != None:
+        sm.set_at_date(args.at_date)
 
     if args.qr != None:
         (path, filetype) = (args.qr, "png")

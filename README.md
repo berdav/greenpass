@@ -82,6 +82,11 @@ Print the key which the greenpass was signed with
 greenpass --qr greenpass.png --verbose --no-cache
 ```
 
+Check if a greenpass was valid or will be valid on a certain date
+```bash
+greenpass --qr greenpass.png --at-date '2021-10-30 18:34'
+```
+
 ## Switches
 ```bash
 -h --help
@@ -152,6 +157,11 @@ Print more information (e.g. which key verifies the certificate).
 --dump-sign
 ```
 Print details on the headers and signature of the certificate.
+
+```bash
+--at-date AT_DATE 
+```
+Use AT_DATE instead of the current date
 
 ## Pointers
 If you want more information on the green pass certification and how
