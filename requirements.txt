@@ -11,3 +11,4 @@ requests
 termcolor
 PyMuPDF
 cose
+tzlocal
