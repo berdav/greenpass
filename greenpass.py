@@ -85,6 +85,10 @@ if __name__=="__main__":
                         action="store_true",
                         help="Dump the signature included in the certificate")
 
+    parser.add_argument("--no-block-list",
+                        action="store_true",
+                        help="Do not consider block list")
+
     args = parser.parse_args()
 
     cachedir = args.cachedir
@@ -143,7 +147,8 @@ if __name__=="__main__":
         out.dump_cose(phdr, uhdr, signature)
         sys.exit(1)
 
-    res = logic.verify_certificate(out, gpp, sm, cup)
+    res = logic.verify_certificate(out, gpp, sm, cup,
+                                   consider_blocklist=not args.no_block_list)
 
     # Unix return code is inverted
     if res:
