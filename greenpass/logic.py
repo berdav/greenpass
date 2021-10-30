@@ -190,6 +190,7 @@ class LogicManager(object):
                            gpp,
                            sm,
                            cup,
+                           consider_blocklist=True,
                            raw=False,
                            k=GreenPassKeyManager(),
                            verificator_key=None):
@@ -298,7 +299,9 @@ class LogicManager(object):
             elif cert_info[0] == k.get_certificate_id()[1]:
                 output.add_cert_info(cert_info[0], cert_info[1])
                 blocklisted = sm.check_uvci_blocklisted(cert_info[1])
-                if (blocklisted):
+                # Mask with the blocklist filter
+                blocklisted = blocklisted and consider_blocklist
+                if blocklisted:
                     output.add_cert_info_error("Blocklisted", "True")
                 else:
                     output.add_cert_info_ok("Blocklisted", "False")
