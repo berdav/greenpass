@@ -183,7 +183,7 @@ class OutputManager(NoneOutput):
             for el in vac[1].items():
                 print("  {} {} not before: {:4d} days  not after: {:4d} days".format(
                     self.colored("{:12s}".format(el[0]), "blue"),
-                    self.colored("{:12s}".format(Vaccine(vac[0]).get_pretty_name()), "yellow"),
+                    self.colored("{:20s}".format(Vaccine(vac[0]).get_pretty_name()), "yellow"),
                     el[1]["start_day"], el[1]["end_day"]
                 ))
 
