@@ -148,6 +148,11 @@ verify the certificate.
 ```
 Print more information (e.g. which key verifies the certificate).
 
+```bash
+--dump-sign
+```
+Print details on the headers and signature of the certificate.
+
 ## Pointers
 If you want more information on the green pass certification and how
 to parse or verify it you can refer to the following resources:
