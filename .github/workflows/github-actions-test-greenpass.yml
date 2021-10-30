@@ -1,0 +1,22 @@
+name: Test application
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  test-application:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install prerequisites
+        run: |
+          sudo apt-get -y update
+          sudo apt-get -y install python3 python3-pip libzbar0
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: Install requirements
+        run: |
+          pip install -r requirements.txt
+      - name: Run tests
+        run: |
+          bash test.sh
