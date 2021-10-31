@@ -331,9 +331,6 @@ class LogicManager(object):
             level = 0
             hours_to_valid, remaining_hours = sm.get_recovery_remaining_time(recovery_from, recovery_until)
 
-        print("hours to valid: {}".format(hours_to_valid))
-        print("remaininghours: {}".format(remaining_hours))
-
         if hours_to_valid != None and remaining_hours != None:
             if hours_to_valid < 0:
                 level = 3

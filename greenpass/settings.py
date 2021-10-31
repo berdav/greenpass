@@ -189,8 +189,6 @@ class SettingsManager(object):
             d = datetime.now(pytz.utc)
         else:
             d = self.at_date
-        print(d)
-
         return d
 
     def set_at_date(self, at_date):
