@@ -7,6 +7,7 @@ if "$DEBUG"; then
 	OUT=/dev/stdout
 fi
 export OUT
+shift
 
 set -eu
 
@@ -52,7 +53,13 @@ error_exit() {
 }
 
 echo "Running testsuite"
-for t in tests/test*; do
+if test $# -gt 0; then
+	TESTS=( $@ )
+else
+	echo "Executing all tests"
+	TESTS=( $(ls -1 tests/test*) )
+fi
+for t in ${TESTS[@]}; do
 	echo "Executing $t"
 	"$t" || error_exit "$t"
 done
