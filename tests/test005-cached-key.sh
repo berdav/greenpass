@@ -14,16 +14,16 @@ assert_file_exists "$GPFILE_AH"
 assert_file_exists "$GPFILE_MF"
 
 rm -rf "$CACHEDIR"
-assert_false $GP --cachedir "$CACHEDIR" --settings
+assert_false "$GP" --cachedir "$CACHEDIR" --settings
 assert_file_exists "$CACHEDIR/settings"
 
 # Download the keys in the cache
-assert_true  $GP --cachedir "$CACHEDIR" --qr "$GPFILE_AH" --no-block-list
+assert_true  "$GP" --cachedir "$CACHEDIR" --qr "$GPFILE_AH" --no-block-list
 assert_file_exists "$CACHEDIR/53FOjX.4aJs="
 # This is not signed by a real authority
-assert_false $GP --cachedir "$CACHEDIR" --qr "$GPFILE_MF"
+assert_false "$GP" --cachedir "$CACHEDIR" --qr "$GPFILE_MF"
 # German certification authority
-assert_true  $GP --cachedir "$CACHEDIR" --qr "$GPFILE_RK" --no-block-list
+assert_true  "$GP" --cachedir "$CACHEDIR" --qr "$GPFILE_RK" --no-block-list
 assert_file_exists "$CACHEDIR/XkVWZqUeeFc="
 
 assert_file_exists "$CACHEDIR/tests"

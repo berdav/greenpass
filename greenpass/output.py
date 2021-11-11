@@ -58,7 +58,7 @@ class NoneOutput(object):
     def add_remaining_time(self, certtype, certdate, level, remaining_days):
         pass
 
-    def get_not_yet_valid(self, remaining_hours):
+    def get_not_yet_valid(self, hours_to_valid):
         pass
 
     def get_expired(self, remaining_hours):
@@ -76,7 +76,7 @@ class NoneOutput(object):
     def dump_settings(self, sm):
         pass
 
-    def dump_cose(self, signature, phdr, uhdr):
+    def dump_cose(self, phdr, uhdr, signature):
         pass
 
     def rawdump(self, data):

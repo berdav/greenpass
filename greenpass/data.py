@@ -192,7 +192,8 @@ class Manufacturer(object):
             l = json.loads(r.text)
             for el in l:
                 o[el["id_device"]] = el["commercial_name"]
-        except:
+        # TODO: Be more specific on the exceptions
+        except Exception:
             pass
 
         return o

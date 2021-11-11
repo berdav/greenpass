@@ -19,7 +19,6 @@
 import os
 import shutil
 from distutils.core import setup
-import setuptools
 
 maintool = "greenpass"
 

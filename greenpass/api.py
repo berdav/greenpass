@@ -24,7 +24,7 @@ import requests
 from OpenSSL import crypto
 from binascii import hexlify
 from bs4 import BeautifulSoup
-from cose.keys import EC2Key, CoseKey
+from cose.keys import CoseKey
 
 from greenpass.URLs import *
 
@@ -137,7 +137,8 @@ class CertificateUpdater(object):
         # Try to load the certificate
         try:
             pubkey = self.loadpubkey(certificate)
-        except:
+        # TODO: Be more specific on the exceptions
+        except Exception:
             pubkey = certificate
 
         return pubkey

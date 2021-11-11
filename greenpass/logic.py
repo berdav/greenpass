@@ -31,7 +31,7 @@ from greenpass.data import *
 
 class UnrecognizedException(Exception):
     def __init__(self, m):
-        return super(UnrecognizedException, self).__init__(m)
+        super(UnrecognizedException, self).__init__(m)
 
 class TestResult(object):
     def __init__(self, t):
@@ -182,7 +182,6 @@ class LogicManager(object):
 
     def __init__(self, cachedir):
         self.cachedir = cachedir
-        pass
 
     # Verify certificate
     def verify_certificate(self,
