@@ -98,32 +98,30 @@ def setup_argparse():
     return parser.parse_args()
 
 
-def main():
-    args = setup_argparse()
+def manage_cache(cachedir, no_cache, clear_cache):
+    outcachedir = cachedir
+    if no_cache:
+        outcachedir = ''
+    elif clear_cache:
+        shutil.rmtree(outcachedir)
 
-    cachedir = args.cachedir
-    if args.no_cache:
-        cachedir = ''
+    return outcachedir
 
-    if cachedir and args.clear_cache:
-        shutil.rmtree(cachedir)
 
-    res = -1
-
-    if not args.no_color:
+def init_colors(no_color):
+    if not no_color:
         colorama.init()
         from termcolor import colored
     else:
+        # Disable colors
         def _uncolor(x, y):
             return x
-        # Disable colors
         colored = _uncolor
 
-    sm = SettingsManager(cachedir)
+    return colored
 
-    if args.at_date is not None:
-        sm.set_at_date(args.at_date)
 
+def get_filetype(args):
     if args.qr is not None:
         (path, filetype) = (args.qr, "png")
     if args.pdf is not None:
@@ -131,10 +129,28 @@ def main():
     if args.txt is not None and args.txt != "":
         (path, filetype) = (args.txt, "txt")
 
+    return (path, filetype)
+
+
+def main():
+    # Get the arguments
+    args = setup_argparse()
+    # Configure the cache directory
+    cachedir = manage_cache(args.cachedir, args.no_cache, args.clear_cache)
+    # Configure colored output
+    colored = init_colors(args.no_color)
+
+    sm = SettingsManager(cachedir)
+
+    if args.at_date is not None:
+        sm.set_at_date(args.at_date)
+
+    (path, filetype) = get_filetype(args)
+
     if args.settings:
         out = OutputManager(colored)
         out.dump_settings(sm)
-        sys.exit(1)
+        return 1
 
     data = InputTransformer(path, filetype).get_data()
     gpp = GreenPassParser(data)
@@ -142,7 +158,7 @@ def main():
     out = OutputManager(colored)
     if args.raw:
         gpp.dump(out)
-        sys.exit(1)
+        return 1
 
     logic = LogicManager(cachedir)
 
@@ -160,20 +176,16 @@ def main():
         signature = gpp.get_sign_from_cose()
         phdr, uhdr = gpp.get_headers_from_cose()
         out.dump_cose(phdr, uhdr, signature)
-        sys.exit(1)
+        return 1
 
     res = logic.verify_certificate(out, gpp, sm, cup,
                                    consider_blocklist=not args.no_block_list)
 
-    # Unix return code is inverted
-    if res:
-        retval = 0
-    else:
-        retval = 1
-
     out.dump()
-    sys.exit(retval)
+
+    # Unix return code is inverted
+    return 1 - res
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
