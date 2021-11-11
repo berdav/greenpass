@@ -92,9 +92,6 @@ class SettingsManager(object):
         # Ignore app specific options
         pass
 
-    def dispatch_unknown_field(self, setting):
-        print("[~] Unknown field {}".format(setting["name"]))
-
     def dispatch_test(self, setting):
         field_name = setting["name"]
         field_value = setting["value"]
@@ -131,7 +128,7 @@ class SettingsManager(object):
         elif "black_list_uvci" == field_name:
             self.dispatch_blocklist(setting)
         else:
-            self.dispatch_unknown_field(setting)
+            print("[~] Unknown field {}".format(setting["name"]))
 
     def get_settings(self):
         r = requests.get("{}/settings".format(BASE_URL_DGC))
