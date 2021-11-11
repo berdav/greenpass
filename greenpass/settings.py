@@ -55,6 +55,84 @@ class SettingsManager(object):
              self.test,
              self.blocklist) = pickle.load(f)
 
+    # Dispatchers
+    def dispatch_vaccine(self, setting):
+        vaccine_template = {
+            "complete": {
+                "start_day": -1,
+                "end_day": -1
+            },
+            "not_complete": {
+                "start_day": -1,
+                "end_day": -1
+            }
+        }
+        field_name = setting["name"]
+        field_type = setting["type"]
+        field_value = setting["value"]
+        vtype_regex = r"((?:not_)?complete)"
+        daytype_regex = r"((?:start|end)_day)"
+        if self.vaccines.get(field_type, None) is None:
+            self.vaccines[field_type] = vaccine_template
+
+        vtype_re = re.search(vtype_regex, field_name)
+        daytype_re = re.search(daytype_regex, field_name)
+
+        vtype = vtype_re.group(1)
+        daytype = daytype_re.group(1)
+
+        self.vaccines[field_type][vtype][daytype] = int(field_value)
+
+    def dispatch_blocklist(self, setting):
+        self.blocklist = self.blocklist.union(set(
+            setting["value"].split(";")[:-1])
+        )
+
+    def dispatch_operating_system(self, setting):
+        # Ignore app specific options
+        pass
+
+    def dispatch_unknown_field(self, setting):
+        print("[~] Unknown field {}".format(setting["name"]))
+
+    def dispatch_test(self, setting):
+        field_name = setting["name"]
+        field_value = setting["value"]
+        if "molecular" in field_name:
+            ttype = "molecular"
+        elif "rapid" in field_name:
+            ttype = "rapid"
+
+        if "start_hours" in field_name:
+            hourtype = "start_hours"
+        elif "end_hours" in field_name:
+            hourtype = "end_hours"
+
+        self.test[ttype][hourtype] = int(field_value)
+
+    def dispatch_recovery(self, setting):
+        field_name = setting["name"]
+        field_value = setting["value"]
+        if "start_day" in field_name:
+            self.recovery["start_day"] = int(field_value)
+        elif "end_day" in field_name:
+            self.recovery["end_day"] = int(field_value)
+
+    def dispatch_setting(self, setting):
+        field_name = setting["name"]
+        if "vaccine" in field_name:
+            self.dispatch_vaccine(setting)
+        elif "recovery" in field_name:
+            self.dispatch_recovery(setting)
+        elif "test" in field_name:
+            self.dispatch_test(setting)
+        elif "ios" == field_name or "android" == field_name:
+            self.dispatch_operating_system(setting)
+        elif "black_list_uvci" == field_name:
+            self.dispatch_blocklist(setting)
+        else:
+            self.dispatch_unknown_field(setting)
+
     def get_settings(self):
         r = requests.get("{}/settings".format(BASE_URL_DGC))
         if r.status_code != 200:
@@ -70,58 +148,9 @@ class SettingsManager(object):
 
         settings = json.loads(r.text)
         # Dispatch and create the dicts
-        for el in settings:
-            if "vaccine" in el["name"]:
-                if self.vaccines.get(el["type"], None) is None:
-                    self.vaccines[el["type"]] = {
-                        "complete": {
-                            "start_day": -1,
-                            "end_day": -1
-                        },
-                        "not_complete": {
-                            "start_day": -1,
-                            "end_day": -1
-                        }
-                    }
-                if "not_complete" in el["name"]:
-                    vtype = "not_complete"
-                elif "complete" in el["name"]:
-                    vtype = "complete"
+        for setting in settings:
+            self.dispatch_setting(setting)
 
-                if "start_day" in el["name"]:
-                    daytype = "start_day"
-                elif "end_day" in el["name"]:
-                    daytype = "end_day"
-
-                self.vaccines[el["type"]][vtype][daytype] = int(el["value"])
-
-            elif "recovery" in el["name"]:
-                if "start_day" in el["name"]:
-                    self.recovery["start_day"] = int(el["value"])
-                elif "end_day" in el["name"]:
-                    self.recovery["end_day"] = int(el["value"])
-
-            elif "test" in el["name"]:
-                if "molecular" in el["name"]:
-                    ttype = "molecular"
-                elif "rapid" in el["name"]:
-                    ttype = "rapid"
-
-                if "start_hours" in el["name"]:
-                    hourtype = "start_hours"
-                elif "end_hours" in el["name"]:
-                    hourtype = "end_hours"
-
-                self.test[ttype][hourtype] = int(el["value"])
-            elif "ios" == el["name"] or "android" == el["name"]:
-                # Ignore app specific options
-                pass
-            elif "black_list_uvci" == el["name"]:
-                self.blocklist = self.blocklist.union(set(
-                    el["value"].split(";")[:-1])
-                )
-            else:
-                print("[~] Unknown field {}".format(el["name"]))
         return self.vaccines, self.recovery, self.test, self.blocklist
 
     # Return the time that a test is still valid, negative time if expired
