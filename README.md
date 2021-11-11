@@ -29,6 +29,13 @@ using the following command:
 pip3 install -r requirements.txt
 ```
 
+You can also use it trough the pre-built Docker image, you can find it
+[here](https://hub.docker.com/r/berdav/greenpass).  You can easily use
+it using:
+```bash
+sudo docker run --rm -ti berdav/greenpass --settings
+```
+
 ## Usage
 You can feed the application with different file formats, for instance:
 
