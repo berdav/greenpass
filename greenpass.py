@@ -122,6 +122,7 @@ def init_colors(no_color):
 
 
 def get_filetype(args):
+    (path, filetype) = (None, None)
     if args.qr is not None:
         (path, filetype) = (args.qr, "png")
     if args.pdf is not None:
@@ -178,13 +179,15 @@ def main():
         out.dump_cose(phdr, uhdr, signature)
         return 1
 
-    res = logic.verify_certificate(out, gpp, sm, cup,
-                                   consider_blocklist=not args.no_block_list)
+    cert = gpp.get_certificate()
+    res = logic.verify_certificate(cert, sm, cup,
+                                   enable_blocklist=not args.no_block_list)
 
+    out.print_cert(cert)
     out.dump()
 
     # Unix return code is inverted
-    return 1 - res
+    return not res
 
 
 if __name__ == "__main__":

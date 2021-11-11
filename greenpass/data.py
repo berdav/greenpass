@@ -117,6 +117,9 @@ class GreenPassKeyManager(object):
     def get_date_of_collection(self):
         return ("sc", "Date of collection")
 
+    def get_blocklisted(self):
+        return (None, "Blocklisted")
+
     def get_test_result(self):
         return ("tr", "Test result")
 

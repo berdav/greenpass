@@ -16,21 +16,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import re
 import sys
 import zlib
 import base45
 import json
 import cbor2
 import pytz
+
 from datetime import datetime
 from cose.headers import KID, Algorithm
 from cose.messages import CoseMessage
 
-from greenpass.data import Disease
-from greenpass.data import Vaccine
 from greenpass.data import TestType
-from greenpass.data import Manufacturer
 from greenpass.data import GreenPassKeyManager
 
 
@@ -63,9 +60,214 @@ class TestResult(object):
         return "Unknown"
 
 
+def _parse_date(d):
+    return datetime.fromtimestamp(d, pytz.utc)
+
+
+class Certificate(object):
+    def __init__(self, k):
+        self.k = k
+        self.release_date = None
+        self.expiration_date = None
+        self.dose_number = None
+        self.total_doses = None
+        self.validity_from = None
+        self.validity_until = None
+        self.vaccine_pn = None
+        self.vaccine_date = None
+        self.test_type = None
+        self.test_collection_date = None
+        self.certificate_id = None
+        self.expired = False
+        self.hours_to_valid = None
+        self.remaining_hours = None
+        self.blocklisted = False
+        self.sign_alg = None
+        self.kid = None
+        self._type = None
+        self.verified = None
+
+        self.info = {
+            "qr": {},
+            "personal": {},
+            "cert": {}
+        }
+
+    # Unstructured data (just for print, not used)
+    def set_info(self, _type, key, val):
+        self.info[_type][key] = val
+
+    def get_info(self):
+        return self.info
+
+    def get_release_date(self):
+        return self.release_date
+
+    def set_release_date(self, val):
+        self.release_date = _parse_date(val)
+
+    def get_expiration_date(self):
+        return self.expiration_date
+
+    def set_expiration_date(self, val):
+        self.expiration_date = _parse_date(val)
+
+    def get_dose_number(self):
+        return self.dose_number
+
+    def set_dose_number(self, val):
+        self.dose_number = val
+
+    def get_total_doses(self):
+        return self.total_doses
+
+    def set_total_doses(self, val):
+        self.total_doses = val
+
+    def get_validity_from(self):
+        return self.validity_from
+
+    def set_validity_from(self, val):
+        self.validity_from = val
+
+    def get_validity_until(self):
+        return self.validity_until
+
+    def set_validity_until(self, val):
+        self.validity_until = val
+
+    def get_vaccine_pn(self):
+        return self.vaccine_pn
+
+    def set_vaccine_pn(self, val):
+        self.vaccine_pn = val
+
+    def get_vaccine_date(self):
+        return self.vaccine_date
+
+    def set_vaccine_date(self, val):
+        self.vaccine_date = val
+
+    def get_test_type(self):
+        return self.test_type
+
+    def set_test_type(self, val):
+        self.test_type = val
+
+    def get_vaccine_type(self):
+        return self.vaccine_type
+
+    def set_vaccine_type(self, val):
+        self.vaccine_type = val
+
+    def get_date_of_collection(self):
+        return self.date_of_collection
+
+    def set_date_of_collection(self, val):
+        self.date_of_collection = val
+
+    def get_certificate_id(self):
+        return self.certificate_id
+
+    def set_certificate_id(self, val):
+        self.certificate_id = val
+
+    def get_expired(self):
+        return self.expired
+
+    def set_expired(self, val):
+        self.expired = val
+
+    def get_hours_to_valid(self):
+        return self.hours_to_valid
+
+    def set_hours_to_valid(self, val):
+        self.hours_to_valid = val
+
+    def get_remaining_hours(self):
+        return self.remaining_hours
+
+    def set_remaining_hours(self, val):
+        self.remaining_hours = val
+
+    def get_blocklisted(self):
+        return self.blocklisted
+
+    def set_blocklisted(self, val):
+        self.blocklisted = val
+
+    def get_sign_alg(self):
+        return self.sign_alg
+
+    def set_sign_alg(self, val):
+        self.sign_alg = val
+
+    def get_kid(self):
+        return self.kid
+
+    def set_kid(self, val):
+        self.kid = val
+
+    def set_parent(self, p):
+        self.parent = p
+
+    def set_key(self, k):
+        self.parent.set_key(k)
+
+    def verify(self):
+        return self.parent.verify()
+
+    def get_type(self):
+        # Calculate type if not set
+        if self._type is None:
+            if self.get_vaccine_type() is not None:
+                self._type = "vaccine"
+            elif self.get_date_of_collection() is not None:
+                self._type = "test"
+            elif self.get_validity_from() is not None:
+                self._type = "recovery"
+
+        return self._type
+
+    def set_verified(self, val):
+        self.verified = val
+
+    def get_verified(self):
+        return self.verified
+
+    def is_negative(self):
+        # XXX Fix
+        return True
+
+    def add_info(self, _type, key, val):
+        # Filter value used to verify the validity of the
+        # certificate
+        if key == self.k.get_release_date()[1]:
+            self.set_release_date(val)
+        elif key == self.k.get_expiration_date()[1]:
+            self.set_expiration_date(val)
+        elif key == self.k.get_dose_number()[1]:
+            self.set_dose_number(val)
+        elif key == self.k.get_total_doses()[1]:
+            self.set_total_doses(val)
+        elif key == self.k.get_certificate_id()[1]:
+            self.set_certificate_id(val)
+        elif key == self.k.get_validity_from()[1]:
+            self.set_validity_from(val)
+        elif key == self.k.get_validity_until()[1]:
+            self.set_validity_until(val)
+        elif key == self.k.get_date_of_collection()[1]:
+            self.set_date_of_collection(val)
+        elif key == self.k.get_vaccine_type()[1]:
+            self.set_vaccine_type(val)
+        else:
+            self.set_info(_type, key, val)
+
+
 # Parse a green pass file
 class GreenPassParser(object):
     def __init__(self, certification, k=GreenPassKeyManager()):
+        self.k = k
         # Remove the initial HC1: part and decode the certificate
         data = b":".join(certification.strip().split(b":")[1::])
         decoded = base45.b45decode(data)
@@ -251,6 +453,26 @@ class GreenPassParser(object):
     def dump(self, om):
         om.rawdump(json.dumps(self.payload))
 
+    def get_certificate(self):
+        c = Certificate(self.k)
+        # Invalid GP, more than one certificate info
+        if len(self.certificate_info) > 1:
+            return None
+
+        for qr_info in self.qr_info.items():
+            c.add_info("qr", qr_info[0], qr_info[1])
+        for personal_info in self.personal_info.items():
+            c.add_info("personal", personal_info[0], personal_info[1])
+        for cert_info in self.certificate_info[0].items():
+            c.add_info("cert", cert_info[0], cert_info[1])
+
+        c.set_sign_alg(self.get_sign_alg())
+        c.set_kid(self.get_kid())
+
+        c.set_parent(self)
+
+        return c
+
 
 # Logic Manager, retrieve information from the certificate and set
 #  output.
@@ -259,178 +481,30 @@ class LogicManager(object):
         self.cachedir = cachedir
 
     # Verify certificate
-    def verify_certificate(self,
-                           output,
-                           gpp,
-                           sm,
-                           cup,
-                           consider_blocklist=True,
+    def verify_certificate(self, cert, sm, cup,
+                           enable_blocklist=True,
                            raw=False,
                            k=GreenPassKeyManager(),
                            verificator_key=None):
-        dn = -1
-        sd = -1
 
-        vaccinedate = None
-        recovery_from = None
-        recovery_until = None
-        testcollectiondate = None
-
-        expired = True
-        vaccine = None
-        positive = False
+        expired = False
+        blocklisted = False
         hours_to_valid = None
-        testtype = None
         remaining_hours = None
 
-        blocklisted = False
-
-        certificate_type = k.get_cert_type_long_name(gpp.certificate_type)
-        output.add_general_info_info(
-            k.get_certificate_type()[1], certificate_type
-        )
-
-        for qr_info in gpp.qr_info.items():
-            if qr_info[0] == k.get_release_date()[1] or \
-               qr_info[0] == k.get_expiration_date()[1]:
-                output.add_general_info(
-                    qr_info[0], datetime.fromtimestamp(qr_info[1], pytz.utc)
-                )
-            else:
-                output.add_general_info(qr_info[0], qr_info[1])
-
-        for personal_info in gpp.personal_info.items():
-            output.add_general_info(personal_info[0], personal_info[1])
-
-        # Invalid GP, more than one certificate info
-        if len(gpp.certificate_info) > 1:
-            return False
-
-        el = gpp.certificate_info[0]
-
-        for cert_info in tuple(filter(
-            lambda x: x[1] is not None, el.items())
-        ):
-            if cert_info[0] == k.get_dose_number()[1]:
-                dn = cert_info[1]
-            elif cert_info[0] == k.get_test_result()[1]:
-                t = TestResult(int(cert_info[1]))
-                # Strict check, also unknown do not get validated
-                positive = not t.is_negative()
-                if positive:
-                    output.add_cert_info_error(cert_info[0], t)
-                else:
-                    output.add_cert_info_ok(cert_info[0], t)
-            elif cert_info[0] == k.get_validity_from()[1]:
-                try:
-                    recovery_from = datetime.strptime(cert_info[1], "%Y-%m-%d")
-                    recovery_from = pytz.utc.localize(
-                        recovery_from, is_dst=None
-                    ).astimezone(pytz.utc)
-                except Exception as e:
-                    print(e, file=sys.stderr)
-                    recovery_from = 0
-            elif cert_info[0] == k.get_validity_until()[1]:
-                try:
-                    recovery_until = datetime.strptime(
-                        cert_info[1], "%Y-%m-%d"
-                    )
-                    recovery_until = pytz.utc.localize(
-                        recovery_until, is_dst=None
-                    ).astimezone(pytz.utc)
-                except Exception as e:
-                    print(e, file=sys.stderr)
-                    recovery_until = 0
-                certdate = recovery_from
-            elif cert_info[0] == k.get_total_doses()[1]:
-                sd = int(cert_info[1])
-            elif cert_info[0] == k.get_vaccine_pn()[1]:
-                vaccine = cert_info[1]
-                output.add_cert_info_info(
-                    cert_info[0], Vaccine(cert_info[1]).get_pretty_name()
-                )
-            elif cert_info[0] == k.get_test_type()[1]:
-                testtype = cert_info[1]
-                output.add_cert_info_info(
-                    cert_info[0], TestType(cert_info[1]).get_pretty_name()
-                )
-            elif cert_info[0] == k.get_vaccination_date()[1]:
-                try:
-                    vaccinedate = datetime.strptime(cert_info[1], "%Y-%m-%d")
-                    vaccinedate = pytz.utc.localize(
-                        vaccinedate, is_dst=None
-                    ).astimezone(pytz.utc)
-                except Exception as e:
-                    print(e, file=sys.stderr)
-                    vaccinedate = 0
-                certdate = vaccinedate
-            elif cert_info[0] == k.get_date_of_collection()[1]:
-                try:
-                    # strptime on Python < 3.7 does not correctly parse the
-                    # timezone format with a colon inside, remove the colon
-                    # in the timezone specification.
-                    rgx = r"""
-                    (
-                        \d{4}-\d{2}-\d{2}T # Date
-                        \d{2}:\d{2}:\d{2}  # Time
-                    )(
-                        [+-]
-                        \d{2}              # Timezone hours
-                        (?::\d{2})         # Timezone minutes
-                    )?"
-                    """
-                    compiled_regex = re.compile(rgx, re.VERBOSE)
-                    r = compiled_regex.match(cert_info[1])
-                    date = r.group(1)
-                    zone = r.group(2)
-
-                    if zone is None:
-                        date += "+0000"
-                    else:
-                        date += r.group(2).replace(":", "")
-
-                    testcollectiondate = datetime.strptime(
-                        date, "%Y-%m-%dT%H:%M:%S%z"
-                    )
-                except Exception as e:
-                    print(e, file=sys.stderr)
-                    testcollectiondate = 0
-                certdate = testcollectiondate
-            elif cert_info[0] == k.get_manufacturer()[1]:
-                name = Manufacturer(
-                    cert_info[1], self.cachedir
-                ).get_pretty_name()
-                output.add_cert_info_info(cert_info[0], name)
-            elif cert_info[0] == k.get_target_disease()[1]:
-                output.add_cert_info_info(
-                    cert_info[0], Disease(cert_info[1]).get_pretty_name()
-                )
-            elif cert_info[0] == k.get_certificate_id()[1]:
-                output.add_cert_info(cert_info[0], cert_info[1])
-                blocklisted = sm.check_uvci_blocklisted(cert_info[1])
-                # Mask with the blocklist filter
-                blocklisted = blocklisted and consider_blocklist
-                if blocklisted:
-                    output.add_cert_info_error("Blocklisted", "True")
-                else:
-                    output.add_cert_info_ok("Blocklisted", "False")
-            else:
-                output.add_cert_info(cert_info[0], cert_info[1])
-
-        # Complex fields parse
-        if dn > 0 and sd > 0:
-            if dn == sd:
-                output.add_cert_info_ok(
-                    k.get_doses()[1], "{}/{}".format(dn, sd)
-                )
-            elif dn < sd and dn != 0:
-                output.add_cert_info_warning(
-                    k.get_doses()[1], "{}/{}".format(dn, sd)
-                )
+        dn = cert.get_dose_number()
+        sd = cert.get_total_doses()
+        positive = not cert.is_negative()
+        recovery_from = cert.get_validity_from()
+        recovery_until = cert.get_validity_until()
+        vaccine = cert.get_vaccine_pn()
+        testtype = cert.get_test_type()
+        vaccinedate = cert.get_vaccine_date()
+        testcollectiondate = cert.get_date_of_collection()
+        cert_id = cert.get_certificate_id()
 
         # Check test validity
         if testcollectiondate is not None and testtype is not None:
-            level = 0
             ttype = TestType(testtype)
             hours_to_valid, remaining_hours = sm.get_test_remaining_time(
                 testcollectiondate, ttype.get_type()
@@ -438,59 +512,52 @@ class LogicManager(object):
 
         # Check vaccine validity
         if vaccinedate is not None and vaccine is not None:
-            level = 0
             hours_to_valid, remaining_hours = sm.get_vaccine_remaining_time(
                 vaccinedate, vaccine, dn == sd
             )
 
         # Check recovery validity
         if recovery_from is not None and recovery_until is not None:
-            level = 0
             hours_to_valid, remaining_hours = sm.get_recovery_remaining_time(
                 recovery_from, recovery_until
             )
 
         if hours_to_valid is not None and remaining_hours is not None:
             if hours_to_valid < 0:
-                level = 3
-                remaining_days = output.get_not_yet_valid(-hours_to_valid)
                 expired = True
             elif remaining_hours <= 0:
-                level = 3
-                remaining_days = output.get_expired(remaining_hours)
                 expired = True
-            elif remaining_hours * 24 < 14:
-                level = 2
-                remaining_hours = output.get_hours_left(remaining_hours)
-                remaining_days = remaining_hours
-                expired = False
             else:
-                level = 1
-                remaining_days = output.get_months_left(remaining_hours)
                 expired = False
 
-            output.add_remaining_time(
-                certificate_type, certdate, level, remaining_days
-            )
-        alg = gpp.get_sign_alg()
-        key = cup.get_key_coseobj(gpp.get_kid(), alg=alg)
-        gpp.set_key(key)
-        verified = gpp.verify()
+        blocklisted = enable_blocklist and sm.check_uvci_blocklisted(cert_id)
 
-        if verified:
-            output.add_general_info_ok(k.get_verified()[1], verified)
-        else:
-            output.add_general_info_error(k.get_verified()[1], verified)
+        cert.set_expired(expired)
+        cert.set_hours_to_valid(hours_to_valid)
+        cert.set_remaining_hours(remaining_hours)
 
-        unknown_cert = gpp.certificate_type not in (
-                k.get_vaccine()[0],
-                k.get_test()[0],
-                k.get_recovery()[0]
-        )
+        # Check blocklist by ID
+        cert.set_blocklisted(blocklisted)
+
+        alg = cert.get_sign_alg()
+        key = cup.get_key_coseobj(cert.get_kid(), alg=alg)
+        cert.set_key(key)
+        verified = cert.verify()
+
+        unknown_cert = not cert.get_type() == "vaccine"
+        unknown_cert = unknown_cert and not cert.get_type() == "test"
+        unknown_cert = unknown_cert and not cert.get_type() == "recovery"
+
+        cert.set_verified(verified)
 
         valid = verified
+        print(f"  verified     {verified}")
         valid = valid and not expired
+        print(f"  expired      {expired}")
         valid = valid and not positive
+        print(f"  positive     {positive}")
         valid = valid and not unknown_cert
+        print(f"  unknown      {unknown_cert}")
         valid = valid and not blocklisted
+        print(f"  blocklisted  {blocklisted}")
         return valid

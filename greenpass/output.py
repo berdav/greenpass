@@ -20,6 +20,7 @@ import sys
 from termcolor import colored
 
 from greenpass.data import Vaccine
+from greenpass.data import GreenPassKeyManager
 
 
 class NoneOutput(object):
@@ -83,6 +84,9 @@ class NoneOutput(object):
     def rawdump(self, data):
         pass
 
+    def print_cert(self, cert):
+        pass
+
 
 # Output Manager, manages output and dumps to files and stdout
 class OutputManager(NoneOutput):
@@ -92,10 +96,12 @@ class OutputManager(NoneOutput):
         self.colored = colored
 
     def add_general_info(self, infoname, infoval):
-        self.out += "{:30s} {}\n".format(infoname, infoval)
+        if infoval is not None:
+            self.out += "{:30s} {}\n".format(infoname, infoval)
 
     def add_cert_info(self, infoname, infoval):
-        self.out += "  {:28s} {}\n".format(infoname, infoval)
+        if infoval is not None:
+            self.out += "  {:28s} {}\n".format(infoname, infoval)
 
     def add_general_info_ok(self, infoname, infoval):
         self.add_general_info(infoname, self.colored(infoval, "green"))
@@ -206,3 +212,46 @@ class OutputManager(NoneOutput):
 
     def rawdump(self, data):
         print(data)
+
+    def print_cert(self, cert, km=GreenPassKeyManager()):
+        self.add_general_info_info(
+            "Certificate Type", cert.get_type().capitalize()
+        )
+
+        for k, v in cert.get_info()["qr"].items():
+            self.add_general_info(k, v)
+
+        self.add_general_info(
+            km.get_release_date()[1], cert.get_release_date()
+        )
+
+        self.add_general_info(
+            km.get_expiration_date()[1], cert.get_expiration_date()
+        )
+
+        for k, v in cert.get_info()["personal"].items():
+            self.add_general_info(k, v)
+
+        for k, v in cert.get_info()["cert"].items():
+            self.add_cert_info(k, v)
+
+        self.add_cert_info(
+            km.get_doses()[1],
+            f"{cert.get_dose_number()}/{cert.get_total_doses()}"
+        )
+
+        self.add_cert_info(
+            km.get_certificate_id()[1], cert.get_certificate_id()
+        )
+
+        self.add_cert_info(
+            km.get_vaccine_type()[1], cert.get_vaccine_type()
+        )
+
+        self.add_cert_info(
+            km.get_blocklisted()[1], cert.get_blocklisted()
+        )
+
+        self.add_general_info(
+            km.get_verified()[1], cert.get_verified()
+        )
