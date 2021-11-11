@@ -26,7 +26,7 @@ from binascii import hexlify
 from bs4 import BeautifulSoup
 from cose.keys import CoseKey
 
-from greenpass.URLs import BASE_URL_DGC, BASE_URL_NHS, BASE_URL_
+from greenpass.URLs import BASE_URL_DGC, BASE_URL_NHS, BASE_URL_DGCG
 
 # Update certificate signer
 class CertificateUpdater(object):
