@@ -163,6 +163,25 @@ Print details on the headers and signature of the certificate.
 ```
 Use AT_DATE instead of the current date
 
+## Docker Container
+The docker image shipped with the program can be used in the following
+way:
+
+```bash
+zbarimg --raw qrcode.png | sudo docker -i greenpass
+```
+Read a PNG greenpass qrcode
+
+```bash
+sudo docker -i greenpass --settings
+```
+To read the settings
+
+And virtually with all the switches you can find in the previous
+section.  At the moment, files are not easily passed in the container,
+therefore it is better to process the qrcode or the pdf outside of the
+container and extract the qrcode text to pass in the application.
+
 ## Pointers
 If you want more information on the green pass certification and how
 to parse or verify it you can refer to the following resources:
