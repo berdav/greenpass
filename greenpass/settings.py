@@ -26,7 +26,7 @@ import requests
 from datetime import datetime
 from tzlocal import get_localzone
 
-from greenpass.URLs import *
+from greenpass.URLs import BASE_URL_DGC
 
 # Retrieve settings from unified API endpoint
 class SettingsManager(object):

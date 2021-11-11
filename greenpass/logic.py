@@ -27,7 +27,11 @@ from datetime import datetime
 from cose.headers import KID, Algorithm
 from cose.messages import CoseMessage
 
-from greenpass.data import *
+from greenpass.data import Disease
+from greenpass.data import Vaccine
+from greenpass.data import TestType
+from greenpass.data import Manufacturer
+from greenpass.data import GreenPassKeyManager
 
 class UnrecognizedException(Exception):
     def __init__(self, m):

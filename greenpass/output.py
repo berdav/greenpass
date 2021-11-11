@@ -19,7 +19,7 @@
 import sys
 from termcolor import colored
 
-from greenpass.data import *
+from greenpass.data import Vaccine
 
 class NoneOutput(object):
     def __init__(self, colored=colored):

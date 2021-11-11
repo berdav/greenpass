@@ -17,6 +17,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from greenpass.api import CertificateUpdater
+from greenpass.api import ForcedCertificateUpdater
+from greenpass.api import CachedCertificateUpdater
 from greenpass.input import InputTransformer
 from greenpass.output import OutputManager
 from greenpass.logic import GreenPassParser, LogicManager

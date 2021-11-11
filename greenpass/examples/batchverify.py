@@ -18,11 +18,11 @@
 
 import sys
 
-from greenpass.input import *
-from greenpass.logic import *
-from greenpass.settings import *
-from greenpass.api import *
-from greenpass.output import *
+from greenpass.input import InputTransformer
+from greenpass.logic import LogicManager
+from greenpass.settings import SettingsManager
+from greenpass.api import CertificateUpdater
+from greenpass.output import NoneOutput
 
 if __name__ == "__main__":
     out = True
