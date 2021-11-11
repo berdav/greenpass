@@ -28,6 +28,7 @@ from tzlocal import get_localzone
 
 from greenpass.URLs import BASE_URL_DGC
 
+
 # Retrieve settings from unified API endpoint
 class SettingsManager(object):
     def __init__(self, cachedir=''):
@@ -49,17 +50,20 @@ class SettingsManager(object):
                 pickle.dump(self.get_settings(), f)
 
         with open(settings, 'rb') as f:
-            self.vaccines, self.recovery, self.test, self.blocklist = pickle.load(f)
+            (self.vaccines,
+             self.recovery,
+             self.test,
+             self.blocklist) = pickle.load(f)
 
     def get_settings(self):
         r = requests.get("{}/settings".format(BASE_URL_DGC))
-        if r.status_code!=200:
+        if r.status_code != 200:
             print("[-] Error from API")
             sys.exit(1)
 
         self.vaccines = {}
         self.recovery = {}
-        self.test    = {
+        self.test = {
             "molecular": {},
             "rapid": {}
         }
@@ -68,7 +72,7 @@ class SettingsManager(object):
         # Dispatch and create the dicts
         for el in settings:
             if "vaccine" in el["name"]:
-                if self.vaccines.get(el["type"], None) == None:
+                if self.vaccines.get(el["type"], None) is None:
                     self.vaccines[el["type"]] = {
                         "complete": {
                             "start_day": -1,
@@ -113,7 +117,9 @@ class SettingsManager(object):
                 # Ignore app specific options
                 pass
             elif "black_list_uvci" == el["name"]:
-                self.blocklist = self.blocklist.union( set(el["value"].split(";")[:-1]) )
+                self.blocklist = self.blocklist.union(set(
+                    el["value"].split(";")[:-1])
+                )
             else:
                 print("[~] Unknown field {}".format(el["name"]))
         return self.vaccines, self.recovery, self.test, self.blocklist
@@ -127,10 +133,10 @@ class SettingsManager(object):
             hours_since_test = seconds_since_test / (60 * 60)
         except Exception as e:
             print(e, file=sys.stderr)
-            return 0,0
+            return 0, 0
 
         valid_start = (hours_since_test - hours["start_hours"])
-        valid_end   = (hours["end_hours"] - hours_since_test)
+        valid_end = (hours["end_hours"] - hours_since_test)
 
         return valid_start, valid_end
 
@@ -142,17 +148,21 @@ class SettingsManager(object):
         else:
             selector = "not_complete"
 
-        days = self.vaccines.get(vtype, { "complete": 0, "not_complete": 0})[selector]
+        days = self.vaccines.get(
+            vtype, {"complete": 0, "not_complete": 0}
+        )[selector]
 
         try:
-            seconds_since_vaccine = (self.checktime() - vaccination_date).total_seconds()
+            seconds_since_vaccine = (
+                self.checktime() - vaccination_date
+            ).total_seconds()
             hours_since_vaccine = seconds_since_vaccine / (60 * 60)
         except Exception as e:
             print(e, file=sys.stderr)
-            return 0,0
+            return 0, 0
 
         valid_start = (hours_since_vaccine - days["start_day"] * 24)
-        valid_end   = (days["end_day"] * 24 - hours_since_vaccine)
+        valid_end = (days["end_day"] * 24 - hours_since_vaccine)
 
         return int(valid_start), int(valid_end)
 
@@ -162,14 +172,16 @@ class SettingsManager(object):
         days = self.recovery
 
         try:
-            seconds_since_recovery = (self.checktime() - recovery_from).total_seconds()
+            seconds_since_recovery = (
+                self.checktime() - recovery_from
+            ).total_seconds()
             hours_since_recovery = seconds_since_recovery / (60 * 60)
         except Exception as e:
             print(e, file=sys.stderr)
-            return 0,0
+            return 0, 0
 
         valid_start = (hours_since_recovery - days["start_day"] * 24)
-        valid_end   = (days["end_day"] * 24 - hours_since_recovery)
+        valid_end = (days["end_day"] * 24 - hours_since_recovery)
 
         valid_until = (recovery_until - self.checktime()).total_seconds()
         valid_until = valid_until / (60 * 60)
@@ -185,7 +197,7 @@ class SettingsManager(object):
         return uvci in self.blocklist
 
     def checktime(self):
-        if self.at_date == None:
+        if self.at_date is None:
             d = datetime.now(pytz.utc)
         else:
             d = self.at_date
@@ -195,10 +207,12 @@ class SettingsManager(object):
         tz = get_localzone()
         # Sanity check to see which are the value inputted
         # Date time, seconds and timezone
-        if re.match(r"\d{4}-\d{2}-\d{2}-\d{2}:\d{2}:\d{2}[+-][:0-9]{2,4}", at_date):
+        if re.match(r"\d{4}-\d{2}-\d{2}-\d{2}:\d{2}:\d{2}[+-][:0-9]{2,4}",
+                    at_date):
             self.at_date = datetime.strptime(at_date, "%Y-%m-%d-%H:%M:%S%z")
         # Date, time and timezone
-        elif re.match(r"\d{4}-\d{2}-\d{2}-\d{2}:\d{2}[+-][:0-9]{2,4}", at_date):
+        elif re.match(r"\d{4}-\d{2}-\d{2}-\d{2}:\d{2}[+-][:0-9]{2,4}",
+                      at_date):
             self.at_date = datetime.strptime(at_date, "%Y-%m-%d-%H:%M%z")
         # Date time and seconds
         elif re.match(r"\d{4}-\d{2}-\d{2}-\d{2}:\d{2}:\d{2}", at_date):
@@ -209,7 +223,7 @@ class SettingsManager(object):
             self.at_date = datetime.strptime(at_date, "%Y-%m-%d-%H:%M")
             self.at_date = self.at_date.replace(tzinfo=tz)
         # Only the date
-        elif   re.match(r"\d{4}-\d{2}-\d{2}", at_date):
+        elif re.match(r"\d{4}-\d{2}-\d{2}", at_date):
             self.at_date = datetime.strptime(at_date, "%Y-%m-%d")
             self.at_date = self.at_date.replace(tzinfo=tz)
         else:

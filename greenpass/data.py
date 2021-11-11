@@ -21,7 +21,20 @@ import json
 import pickle
 import requests
 
-TESTS_URL = "https://covid-19-diagnostics.jrc.ec.europa.eu/devices/export?manufacturer=&text_name=&marking=&rapid_diag=&format=&target_type=&field-1=HSC%20common%20list%20%28RAT%29&value-1=1&search_method=AND"
+TESTS_URL = (
+    "https://covid-19-diagnostics.jrc.ec.europa.eu/"
+    "/devices/export"
+    "?manufacturer="
+    "&text_name="
+    "&marking="
+    "&rapid_diag="
+    "&format="
+    "&target_type="
+    "&field-1=HSC%20common%20list%20%28RAT%29"
+    "&value-1=1"
+    "&search_method=AND"
+)
+
 
 # Static class with common keys for
 # printing and addressing in the qrcode
@@ -33,106 +46,106 @@ class GreenPassKeyManager(object):
     # The first value of these tuples is the key in the qrcode,
     # the second is the localized info
     def get_release_country(self):
-        return ( 1, "Release Country" )
+        return (1, "Release Country")
 
     def get_release_date(self):
-        return ( 6, "Release Date" )
+        return (6, "Release Date")
 
     def get_expiration_date(self):
-        return ( 4, "Expiration Date" )
+        return (4, "Expiration Date")
 
     def get_version(self):
-        return ( "ver", "Version" )
+        return ("ver", "Version")
 
     def get_date_of_birth(self):
-        return ( "dob", "Date of Birth" )
+        return ("dob", "Date of Birth")
 
     def get_name(self):
-        return ( "nam", "Name" )
+        return ("nam", "Name")
 
     def get_personal_data(self):
-        return ( -260, "Personal Data" )
+        return (-260, "Personal Data")
 
     def get_personal_info(self):
-        return ( 1, "Personal Info" )
+        return (1, "Personal Info")
 
     def get_first_name(self):
-        return ( "gn", "First Name" )
+        return ("gn", "First Name")
 
     def get_last_name(self):
-        return ( "fn", "Family Name" )
+        return ("fn", "Family Name")
 
     def get_vaccine(self):
-        return ( "v", "Vaccine" )
+        return ("v", "Vaccine")
 
     def get_test(self):
-        return ( "t", "Test" )
+        return ("t", "Test")
 
     def get_recovery(self):
-        return ( "r", "Recovery" )
+        return ("r", "Recovery")
 
     def get_target_disease(self):
-        return ( "tg", "Target Disease" )
+        return ("tg", "Target Disease")
 
     def get_vaccination_country(self):
-        return ( "co", "Vaccination or Test Country" )
+        return ("co", "Vaccination or Test Country")
 
     def get_certificate_issuer(self):
-        return ( "is", "Certificate Issuer" )
+        return ("is", "Certificate Issuer")
 
     def get_certificate_id(self):
-        return ( "ci", "Certificate ID" )
+        return ("ci", "Certificate ID")
 
     def get_first_positive_test(self):
-        return ( "fr", "First Positive Test" )
+        return ("fr", "First Positive Test")
 
     def get_validity_from(self):
-        return ( "df", "Validity From" )
+        return ("df", "Validity From")
 
     def get_validity_until(self):
-        return ( "du", "Validity Until" )
+        return ("du", "Validity Until")
 
     def get_manufacturer(self):
-        return ( "ma", "Manufacturer and Type" )
+        return ("ma", "Manufacturer and Type")
 
     def get_test_type(self):
-        return ( "tt", "Test type" )
+        return ("tt", "Test type")
 
     def get_test_name(self):
-        return ( "tn", "Test name" )
+        return ("tn", "Test name")
 
     def get_date_of_collection(self):
-        return ( "sc", "Date of collection" )
+        return ("sc", "Date of collection")
 
     def get_test_result(self):
-        return ( "tr", "Test result" )
+        return ("tr", "Test result")
 
     def get_testing_center(self):
-        return ( "tc", "Testing center" )
+        return ("tc", "Testing center")
 
     def get_dose_number(self):
-        return ( "dn", "Dose Number" )
+        return ("dn", "Dose Number")
 
     def get_total_doses(self):
-        return ( "sd", "Total Doses" )
+        return ("sd", "Total Doses")
 
     def get_vaccine_pn(self):
-        return ( "mp", "Vaccine Product Number" )
+        return ("mp", "Vaccine Product Number")
 
     def get_vaccine_type(self):
-        return ( "vp", "Vaccine Type" )
+        return ("vp", "Vaccine Type")
 
     def get_vaccination_date(self):
-        return ( "dt", "Vaccination Date" )
+        return ("dt", "Vaccination Date")
 
     def get_certificate_type(self):
-        return ( "", "Certificate Type" )
+        return ("", "Certificate Type")
 
     def get_verified(self):
-        return ( "", "Verified" )
+        return ("", "Verified")
 
     def get_doses(self):
-        return ( "", "Doses" )
+        return ("", "Doses")
 
     def get_cert_type_long_name(self, t):
         if t == self.get_vaccine()[0]:
@@ -141,6 +154,7 @@ class GreenPassKeyManager(object):
             return self.get_test()[1]
         if t == self.get_recovery()[0]:
             return self.get_recovery()[1]
+
 
 # Vaccine names
 class Vaccine(object):
@@ -157,8 +171,10 @@ class Vaccine(object):
             "EU/1/XX/XXX4": "BBIBP-CorV",
             "EU/1/XX/XXX5": "CoronaVac",
         }
+
     def get_pretty_name(self):
         return self.pretty_name.get(self.t, self.t)
+
 
 # Manufacturer names
 class Manufacturer(object):
@@ -189,8 +205,8 @@ class Manufacturer(object):
         if r.status_code != 200:
             return o
         try:
-            l = json.loads(r.text)
-            for el in l:
+            tests = json.loads(r.text)
+            for el in tests:
                 o[el["id_device"]] = el["commercial_name"]
         # TODO: Be more specific on the exceptions
         except Exception:
@@ -223,8 +239,10 @@ class Disease(object):
         self.pretty_name = {
             "840539006": "Covid19"
         }
+
     def get_pretty_name(self):
         return self.pretty_name.get(self.t, self.t)
+
 
 class TestType(object):
     def __init__(self, t):

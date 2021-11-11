@@ -21,6 +21,7 @@ from termcolor import colored
 
 from greenpass.data import Vaccine
 
+
 class NoneOutput(object):
     def __init__(self, colored=colored):
         pass
@@ -81,6 +82,7 @@ class NoneOutput(object):
 
     def rawdump(self, data):
         pass
+
 
 # Output Manager, manages output and dumps to files and stdout
 class OutputManager(NoneOutput):
@@ -145,6 +147,7 @@ class OutputManager(NoneOutput):
                     -remaining_hours,
                     -int(remaining_hours / 24)
                 )
+
     def get_hours_left(self, remaining_hours):
         return "{:.0f} hours left ({} days)".format(
                     remaining_hours,
@@ -160,7 +163,6 @@ class OutputManager(NoneOutput):
 
     def dump(self, file=sys.stdout):
         print(self.out, file=file)
-
 
     def dump_settings(self, sm):
         print("Tests")
@@ -181,9 +183,14 @@ class OutputManager(NoneOutput):
         print("\nVaccines")
         for vac in sm.vaccines.items():
             for el in vac[1].items():
-                print("  {} {} not before: {:4d} days  not after: {:4d} days".format(
+                print((
+                    "  {} {} not before: {:4d} days  "
+                    "not after: {:4d} days"
+                ).format(
                     self.colored("{:12s}".format(el[0]), "blue"),
-                    self.colored("{:20s}".format(Vaccine(vac[0]).get_pretty_name()), "yellow"),
+                    self.colored("{:20s}".format(
+                        Vaccine(vac[0]).get_pretty_name()
+                    ), "yellow"),
                     el[1]["start_day"], el[1]["end_day"]
                 ))
 
@@ -199,4 +206,3 @@ class OutputManager(NoneOutput):
 
     def rawdump(self, data):
         print(data)
-

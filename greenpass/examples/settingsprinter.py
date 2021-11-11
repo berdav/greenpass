@@ -21,5 +21,5 @@ from greenpass.output import OutputManager
 
 if __name__ == "__main__":
     sm = SettingsManager("")
-    out = OutputManager(lambda x,y: x)
+    out = OutputManager(lambda x, y: x)
     out.dump_settings(sm)

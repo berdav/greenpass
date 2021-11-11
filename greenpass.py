@@ -32,12 +32,13 @@ import colorama
 import functools
 
 # Cache Directory
-DEFAULT_CACHE_DIR=functools.reduce(
+DEFAULT_CACHE_DIR = functools.reduce(
     os.path.join,
-    [ os.path.expanduser("~"), ".local", "greenpass" ]
+    [os.path.expanduser("~"), ".local", "greenpass"]
 )
 
-if __name__=="__main__":
+
+def setup_argparse():
     parser = argparse.ArgumentParser()
 
     command = parser.add_mutually_exclusive_group(required=True)
@@ -94,7 +95,11 @@ if __name__=="__main__":
     parser.add_argument("--at-date",
                         help="Use AT_DATE instead of the current date")
 
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+def main():
+    args = setup_argparse()
 
     cachedir = args.cachedir
     if args.no_cache:
@@ -109,22 +114,24 @@ if __name__=="__main__":
         colorama.init()
         from termcolor import colored
     else:
+        def _uncolor(x, y):
+            return x
         # Disable colors
-        colored=lambda x,y: x
+        colored = _uncolor
 
     sm = SettingsManager(cachedir)
 
-    if args.at_date != None:
+    if args.at_date is not None:
         sm.set_at_date(args.at_date)
 
-    if args.qr != None:
+    if args.qr is not None:
         (path, filetype) = (args.qr, "png")
-    if args.pdf != None:
+    if args.pdf is not None:
         (path, filetype) = (args.pdf, "pdf")
-    if args.txt != None and args.txt != "":
+    if args.txt is not None and args.txt != "":
         (path, filetype) = (args.txt, "txt")
 
-    if args.settings != False:
+    if args.settings:
         out = OutputManager(colored)
         out.dump_settings(sm)
         sys.exit(1)
@@ -139,7 +146,7 @@ if __name__=="__main__":
 
     logic = LogicManager(cachedir)
 
-    if args.key != None:
+    if args.key is not None:
         cup = ForcedCertificateUpdater(args.key)
     elif cachedir != '':
         cup = CachedCertificateUpdater(cachedir)
@@ -166,3 +173,7 @@ if __name__=="__main__":
 
     out.dump()
     sys.exit(retval)
+
+
+if __name__ == "__main__":
+    main()

@@ -19,7 +19,7 @@
 import sys
 
 from greenpass.input import InputTransformer
-from greenpass.logic import LogicManager
+from greenpass.logic import LogicManager, GreenPassParser
 from greenpass.settings import SettingsManager
 from greenpass.api import CertificateUpdater
 from greenpass.output import NoneOutput

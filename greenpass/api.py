@@ -28,6 +28,7 @@ from cose.keys import CoseKey
 
 from greenpass.URLs import BASE_URL_DGC, BASE_URL_NHS, BASE_URL_DGCG
 
+
 # Update certificate signer
 class CertificateUpdater(object):
     def __init__(self):
@@ -39,7 +40,9 @@ class CertificateUpdater(object):
     # Get KEY index from online status page
     def _get_kid_idx(self, kid, _type="dgc"):
         if _type == "dgc":
-            r = requests.get("{}/signercertificate/status".format(BASE_URL_DGC))
+            r = requests.get("{}/signercertificate/status".format(
+                BASE_URL_DGC
+            ))
         elif _type == "nhs":
             r = requests.get("{}/pubkeys/keys.json".format(BASE_URL_NHS))
         else:
@@ -102,7 +105,10 @@ class CertificateUpdater(object):
         x509 = crypto.load_certificate(crypto.FILETYPE_ASN1, certificate)
 
         if self.verbose:
-            subject = ' '.join(map(lambda x: x[1].decode(), x509.get_subject().get_components()))
+            subject = ' '.join(map(
+                lambda x: x[1].decode(),
+                x509.get_subject().get_components()
+            ))
             print("[ ] Signed with public key from")
             print("    {}".format(subject))
         pubkey = crypto.dump_publickey(crypto.FILETYPE_ASN1, x509.get_pubkey())
@@ -189,6 +195,7 @@ class CertificateUpdater(object):
         }
         return CoseKey.from_dict(kattr)
 
+
 # Cached version of Certificate Updater,
 #  saves and retrieves public keys using a cache directory
 class CachedCertificateUpdater(CertificateUpdater):
@@ -211,6 +218,7 @@ class CachedCertificateUpdater(CertificateUpdater):
             keybytes = f.read()
 
         return keybytes
+
 
 class ForcedCertificateUpdater(CertificateUpdater):
     def __init__(self, path):

@@ -22,6 +22,7 @@ import fitz
 from PIL import Image
 from pyzbar import pyzbar
 
+
 # Class to get input data from various sources.
 # Current supported:
 # TXT Data
@@ -31,7 +32,9 @@ class InputTransformer(object):
     def __init__(self, path, filetype):
         if filetype == "txt":
             if path == "-":
-                outdata = bytes(sys.stdin.read().split("\n")[0].encode("ASCII"))
+                outdata = bytes(
+                    sys.stdin.read().split("\n")[0].encode("ASCII")
+                )
             else:
                 with open(path, 'rb') as f:
                     outdata = f.read()
@@ -44,7 +47,8 @@ class InputTransformer(object):
                 imagebytes = pdf_file.extract_image(6)["image"]
                 img = Image.open(io.BytesIO(imagebytes))
             else:
-                print("[-] file format {} not recognized".format(filetype), file=sys.stderr)
+                print("[-] file format {} not recognized".format(filetype),
+                      file=sys.stderr)
 
             decoded = pyzbar.decode(img)
             if len(decoded) < 1:
@@ -60,4 +64,3 @@ class InputTransformer(object):
 
     def get_data(self):
         return self.data
-
