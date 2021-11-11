@@ -16,14 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from greenpass.api import *
-from greenpass.data import *
-from greenpass.input import *
-from greenpass.output import *
-from greenpass.logic import *
-from greenpass.settings import *
+from greenpass.api import CertificateUpdater
+from greenpass.input import InputTransformer
+from greenpass.output import OutputManager
+from greenpass.logic import GreenPassParser, LogicManager
+from greenpass.settings import SettingsManager
 
 import os
+import sys
 import shutil
 import argparse
 import colorama
