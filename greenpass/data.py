@@ -237,7 +237,8 @@ class Manufacturer(object):
         else:
             self.pretty_name.update(self.get_cached_tests_pn(cachedir))
 
-    def get_tests_pn(self):
+    @staticmethod
+    def get_tests_pn():
         o = {}
         r = requests.get(TESTS_URL, allow_redirects=True, timeout=10)
         if r.status_code != 200:

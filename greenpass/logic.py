@@ -235,7 +235,9 @@ class Certificate(object):
     def get_verified(self):
         return self.verified
 
-    def is_negative(self):
+    # XXX Fix
+    @staticmethod
+    def is_negative():
         # XXX Fix
         return True
 
@@ -412,7 +414,8 @@ class GreenPassParser(object):
         return self.cose.phdr, self.cose.uhdr
 
     # Isolate KID from COSE object
-    def get_kid_from_cose(self, phdr, uhdr):
+    @staticmethod
+    def get_kid_from_cose(phdr, uhdr):
         for k in phdr.keys():
             if (isinstance(KID(), k)):
                 return phdr[k]
@@ -481,7 +484,8 @@ class LogicManager(object):
         self.cachedir = cachedir
 
     # Verify certificate
-    def verify_certificate(self, cert, sm, cup,
+    @staticmethod
+    def verify_certificate(cert, sm, cup,
                            enable_blocklist=True,
                            raw=False,
                            k=GreenPassKeyManager(),

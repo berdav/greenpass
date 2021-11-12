@@ -38,7 +38,8 @@ class CertificateUpdater(object):
         self.verbose = True
 
     # Get KEY index from online status page
-    def _get_kid_idx(self, kid, _type="dgc"):
+    @staticmethod
+    def _get_kid_idx(kid, _type="dgc"):
         if _type == "dgc":
             r = requests.get("{}/signercertificate/status".format(
                 BASE_URL_DGC
@@ -115,11 +116,13 @@ class CertificateUpdater(object):
         pubkey = crypto.dump_publickey(crypto.FILETYPE_ASN1, x509.get_pubkey())
         return pubkey
 
-    def extractpubkey(self, pubkey):
+    @staticmethod
+    def extractpubkey(pubkey):
         return pubkey[26::]
 
     # Get key from NHS style repository
-    def get_key_nhs(self, idx):
+    @staticmethod
+    def get_key_nhs(idx):
         r = requests.get("{}/pubkeys/keys.json".format(BASE_URL_NHS))
         for x in json.loads(r.text):
             targetkid = hexlify(base64.b64decode(x["kid"]))
@@ -167,7 +170,8 @@ class CertificateUpdater(object):
         print("[ ] Unknown algorithm: {}".format(alg), file=sys.stderr)
         return None
 
-    def _get_ps256_cose_obj(self, pubkey):
+    @staticmethod
+    def _get_ps256_cose_obj(pubkey):
         # Get N and E from the key
         n = pubkey[32:-5]
         e = pubkey[-3::]
