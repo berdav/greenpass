@@ -29,7 +29,7 @@ using the following command:
 pip3 install -r requirements.txt
 ```
 
-You can also use it trough the pre-built Docker image, you can find it
+You can also use it through the pre-built Docker image, you can find it
 [here](https://hub.docker.com/r/berdav/greenpass).  You can easily use
 it using:
 ```bash
