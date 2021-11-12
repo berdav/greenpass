@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import re
 import sys
 import zlib
 import base45
@@ -40,7 +41,7 @@ class UnrecognizedException(Exception):
 class TestResult(object):
     def __init__(self, t):
         """Get the test result parsing the certificate data."""
-        self.t = t
+        self.t = int(t)
 
     def is_positive(self):
         return self.t == 260373001
@@ -63,8 +64,52 @@ class TestResult(object):
         return "Unknown"
 
 
-def _parse_date(d):
+def _parse_timestamp(d):
     return datetime.fromtimestamp(d, pytz.utc)
+
+
+def _parse_date_time(d):
+    try:
+        # strptime on Python < 3.7 does not correctly parse the
+        # timezone format with a colon inside, remove the colon
+        # in the timezone specification.
+        rgx = r"""
+        (
+            \d{4}-\d{2}-\d{2}T # Date
+            \d{2}:\d{2}:\d{2}  # Time
+        )
+        (
+            [+-]
+            \d{2}              # Timezone hours
+            (?::\d{2})         # Timezone minutes
+        )?
+        """
+        compiled_regex = re.compile(rgx, re.VERBOSE)
+        r = compiled_regex.match(d)
+        date = r.group(1)
+        zone = r.group(2)
+
+        if zone is None:
+            date += "+0000"
+        else:
+            date += r.group(2).replace(":", "")
+
+        testcollectiondate = datetime.strptime(
+            date, "%Y-%m-%dT%H:%M:%S%z"
+        )
+    except Exception as e:
+        print(e, file=sys.stderr)
+        testcollectiondate = 0
+    return testcollectiondate
+
+
+def _parse_date(d):
+    if "T" in d:
+        d = _parse_date_time(d)
+    else:
+        d = datetime.strptime(d, "%Y-%m-%d")
+        d = pytz.utc.localize(d, is_dst=None).astimezone(pytz.utc)
+    return d
 
 
 class Certificate(object):
@@ -80,6 +125,7 @@ class Certificate(object):
         self.vaccine_pn = None
         self.vaccine_date = None
         self.test_type = None
+        self.target_disease = None
         self.test_collection_date = None
         self.certificate_id = None
         self.expired = False
@@ -89,12 +135,36 @@ class Certificate(object):
         self.sign_alg = None
         self.kid = None
         self._type = None
+        self.test_result = None
         self.verified = None
+        self.manufacturer = None
+        self.date_of_collection = None
+        self.vaccination_date = None
+        self.vaccine_type = None
 
         self.info = {
             "qr": {},
             "personal": {},
             "cert": {}
+        }
+
+        # Filter table to process data
+        self.filter_table = {
+            self.k.get_target_disease()[1]:     self.set_target_disease,
+            self.k.get_dose_number()[1]:        self.set_dose_number,
+            self.k.get_total_doses()[1]:        self.set_total_doses,
+            self.k.get_certificate_id()[1]:     self.set_certificate_id,
+            self.k.get_validity_from()[1]:      self.set_validity_from,
+            self.k.get_validity_until()[1]:     self.set_validity_until,
+            self.k.get_vaccine_type()[1]:       self.set_vaccine_type,
+            self.k.get_test_type()[1]:          self.set_test_type,
+            self.k.get_manufacturer()[1]:       self.set_manufacturer,
+            self.k.get_vaccine_pn()[1]:         self.set_vaccine_pn,
+            self.k.get_release_date()[1]:       self.set_release_date,
+            self.k.get_expiration_date()[1]:    self.set_expiration_date,
+            self.k.get_date_of_collection()[1]: self.set_date_of_collection,
+            self.k.get_vaccination_date()[1]:   self.set_vaccination_date,
+            self.k.get_test_result()[1]:        self.set_test_result,
         }
 
     # Unstructured data (just for print, not used)
@@ -104,17 +174,23 @@ class Certificate(object):
     def get_info(self):
         return self.info
 
+    def get_target_disease(self):
+        return self.target_disease
+
+    def set_target_disease(self, val):
+        self.target_disease = val
+
     def get_release_date(self):
         return self.release_date
 
     def set_release_date(self, val):
-        self.release_date = _parse_date(val)
+        self.release_date = _parse_timestamp(val)
 
     def get_expiration_date(self):
         return self.expiration_date
 
     def set_expiration_date(self, val):
-        self.expiration_date = _parse_date(val)
+        self.expiration_date = _parse_timestamp(val)
 
     def get_dose_number(self):
         return self.dose_number
@@ -132,13 +208,13 @@ class Certificate(object):
         return self.validity_from
 
     def set_validity_from(self, val):
-        self.validity_from = val
+        self.validity_from = _parse_date(val)
 
     def get_validity_until(self):
         return self.validity_until
 
     def set_validity_until(self, val):
-        self.validity_until = val
+        self.validity_until = _parse_date(val)
 
     def get_vaccine_pn(self):
         return self.vaccine_pn
@@ -146,11 +222,11 @@ class Certificate(object):
     def set_vaccine_pn(self, val):
         self.vaccine_pn = val
 
-    def get_vaccine_date(self):
-        return self.vaccine_date
+    def get_vaccination_date(self):
+        return self.vaccination_date
 
-    def set_vaccine_date(self, val):
-        self.vaccine_date = val
+    def set_vaccination_date(self, val):
+        self.vaccination_date = _parse_date(val)
 
     def get_test_type(self):
         return self.test_type
@@ -158,17 +234,29 @@ class Certificate(object):
     def set_test_type(self, val):
         self.test_type = val
 
+    def get_manufacturer(self):
+        return self.manufacturer
+
+    def set_manufacturer(self, val):
+        self.manufacturer = val
+
     def get_vaccine_type(self):
         return self.vaccine_type
 
     def set_vaccine_type(self, val):
         self.vaccine_type = val
 
+    def get_test_result(self):
+        return self.test_result
+
+    def set_test_result(self, val):
+        self.test_result = TestResult(val)
+
     def get_date_of_collection(self):
         return self.date_of_collection
 
     def set_date_of_collection(self, val):
-        self.date_of_collection = val
+        self.date_of_collection = _parse_date(val)
 
     def get_certificate_id(self):
         return self.certificate_id
@@ -224,11 +312,14 @@ class Certificate(object):
     def get_type(self):
         # Calculate type if not set
         if self._type is None:
-            if self.get_vaccine_type() is not None:
+            if self.get_vaccine_type() is not None and \
+               self.get_vaccination_date() is not None:
                 self._type = "vaccine"
-            elif self.get_date_of_collection() is not None:
+            if self.get_date_of_collection() is not None and \
+               self.get_test_type() is not None:
                 self._type = "test"
-            elif self.get_validity_from() is not None:
+            if self.get_validity_from() is not None and \
+               self.get_validity_until() is not None:
                 self._type = "recovery"
 
         return self._type
@@ -239,33 +330,24 @@ class Certificate(object):
     def get_verified(self):
         return self.verified
 
-    # XXX Fix
-    @staticmethod
-    def is_negative():
-        # XXX Fix
-        return True
+    def is_negative(self):
+        if self.get_type() != "test":
+            return True
+
+        tr = self.get_test_result()
+        if tr is None:
+            return False
+        return tr.is_negative()
 
     def add_info(self, _type, key, val):
+        # Filter none value
+        if val is None:
+            return
+        process_function = self.filter_table.get(key, None)
         # Filter value used to verify the validity of the
         # certificate
-        if key == self.k.get_release_date()[1]:
-            self.set_release_date(val)
-        elif key == self.k.get_expiration_date()[1]:
-            self.set_expiration_date(val)
-        elif key == self.k.get_dose_number()[1]:
-            self.set_dose_number(val)
-        elif key == self.k.get_total_doses()[1]:
-            self.set_total_doses(val)
-        elif key == self.k.get_certificate_id()[1]:
-            self.set_certificate_id(val)
-        elif key == self.k.get_validity_from()[1]:
-            self.set_validity_from(val)
-        elif key == self.k.get_validity_until()[1]:
-            self.set_validity_until(val)
-        elif key == self.k.get_date_of_collection()[1]:
-            self.set_date_of_collection(val)
-        elif key == self.k.get_vaccine_type()[1]:
-            self.set_vaccine_type(val)
+        if process_function is not None:
+            process_function(val)
         else:
             self.set_info(_type, key, val)
 
@@ -509,25 +591,27 @@ class LogicManager(object):
         recovery_until = cert.get_validity_until()
         vaccine = cert.get_vaccine_pn()
         testtype = cert.get_test_type()
-        vaccinedate = cert.get_vaccine_date()
+        vaccinedate = cert.get_vaccination_date()
         testcollectiondate = cert.get_date_of_collection()
         cert_id = cert.get_certificate_id()
 
+        certificate_type = cert.get_type()
+
         # Check test validity
-        if testcollectiondate is not None and testtype is not None:
+        if certificate_type == "test":
             ttype = TestType(testtype)
             hours_to_valid, remaining_hours = sm.get_test_remaining_time(
                 testcollectiondate, ttype.get_type()
             )
 
         # Check vaccine validity
-        if vaccinedate is not None and vaccine is not None:
+        if certificate_type == "vaccine":
             hours_to_valid, remaining_hours = sm.get_vaccine_remaining_time(
                 vaccinedate, vaccine, dn == sd
             )
 
         # Check recovery validity
-        if recovery_from is not None and recovery_until is not None:
+        if certificate_type == "recovery":
             hours_to_valid, remaining_hours = sm.get_recovery_remaining_time(
                 recovery_from, recovery_until
             )

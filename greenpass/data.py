@@ -23,17 +23,7 @@ import cbor2
 import requests
 
 TESTS_URL = (
-    "https://covid-19-diagnostics.jrc.ec.europa.eu/"
-    "/devices/export"
-    "?manufacturer="
-    "&text_name="
-    "&marking="
-    "&rapid_diag="
-    "&format="
-    "&target_type="
-    "&field-1=HSC%20common%20list%20%28RAT%29"
-    "&value-1=1"
-    "&search_method=AND"
+    "https://covid-19-diagnostics.jrc.ec.europa.eu/devices/export"
 )
 
 
@@ -246,7 +236,7 @@ class Manufacturer(object):
             return o
         try:
             tests = json.loads(r.text)
-            for el in tests:
+            for el in tests["deviceList"]:
                 o[el["id_device"]] = el["commercial_name"]
         # TODO: Be more specific on the exceptions
         except Exception:

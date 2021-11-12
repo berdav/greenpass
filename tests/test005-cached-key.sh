@@ -26,4 +26,5 @@ assert_false "$GP" --cachedir "$CACHEDIR" --qr "$GPFILE_MF"
 assert_true  "$GP" --cachedir "$CACHEDIR" --qr "$GPFILE_RK" --no-block-list
 assert_file_exists "$CACHEDIR/XkVWZqUeeFc="
 
+# disabled, the tests are not downloaded anymore
 assert_file_exists "$CACHEDIR/tests"
