@@ -19,7 +19,7 @@
 import re
 import os
 import sys
-import pickle
+import cbor2
 import pytz
 import json
 import requests
@@ -48,13 +48,13 @@ class SettingsManager(object):
 
         if not os.path.exists(settings):
             with open(settings, 'wb') as f:
-                pickle.dump(self.get_settings(), f)
+                cbor2.dump(self.get_settings(), f)
 
         with open(settings, 'rb') as f:
             (self.vaccines,
              self.recovery,
              self.test,
-             self.blocklist) = pickle.load(f)
+             self.blocklist) = cbor2.load(f)
 
     # Dispatchers
     def dispatch_vaccine(self, setting):

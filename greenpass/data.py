@@ -19,7 +19,7 @@
 import os
 import sys
 import json
-import pickle
+import cbor2
 import requests
 
 TESTS_URL = (
@@ -261,10 +261,10 @@ class Manufacturer(object):
 
         if not os.path.exists(testcache):
             with open(testcache, 'wb') as f:
-                pickle.dump(self.get_tests_pn(), f)
+                cbor2.dump(self.get_tests_pn(), f)
 
         with open(testcache, 'rb') as f:
-            tests = pickle.load(f)
+            tests = cbor2.load(f)
 
         return tests
 
