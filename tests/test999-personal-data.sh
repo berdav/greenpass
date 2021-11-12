@@ -2,7 +2,6 @@
 
 set -eu
 
-CACHEDIR="/tmp/gp-cache"
 TESTDIR="tests/data/private/test"
 VACCINEDIR="tests/data/private/vaccine"
 RECOVERYDIR="tests/data/private/recovery"

@@ -88,7 +88,7 @@ class NoneOutput(object):
     def rawdump(self, data):
         pass
 
-    def print_cert(self, cert, km=GreenPassKeyManager()):
+    def print_cert(self, cert, km=GreenPassKeyManager(), cachedir=''):
         pass
 
 
