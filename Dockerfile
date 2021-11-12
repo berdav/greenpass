@@ -6,7 +6,7 @@ WORKDIR /usr/src/greenpass
 
 COPY requirements.txt ./
 RUN apt-get update                      && \
-    apt-get -y --no-install-recommended    \
+    apt-get -y --no-install-recommends     \
 	gcc                                \
 	libffi-dev                         \
 	libzbar-dev                        \
