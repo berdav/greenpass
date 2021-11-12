@@ -1,5 +1,5 @@
 """
-Greenpass
+Greenpass.
 
 Scriptable green pass verifier.
 With this application you can automatize accesses based on green pass validity.

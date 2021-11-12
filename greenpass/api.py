@@ -32,7 +32,7 @@ from greenpass.URLs import BASE_URL_DGC, BASE_URL_NHS, BASE_URL_DGCG
 # Update certificate signer
 class CertificateUpdater(object):
     def __init__(self):
-        """Download certificates from the remote endpoint"""
+        """Download certificates from the remote endpoint."""
         self.verbose = False
 
     def set_verbose(self):
@@ -206,7 +206,7 @@ class CertificateUpdater(object):
 #  saves and retrieves public keys using a cache directory
 class CachedCertificateUpdater(CertificateUpdater):
     def __init__(self, cachedir):
-        """Download certificates from the remote endpoint and cache them"""
+        """Download certificates from the remote endpoint and cache them."""
         self.cachedir = cachedir
         os.makedirs(cachedir, exist_ok=True)
         super(CachedCertificateUpdater, self).__init__()
@@ -229,10 +229,12 @@ class CachedCertificateUpdater(CertificateUpdater):
 
 class ForcedCertificateUpdater(CertificateUpdater):
     def __init__(self, path):
-        """Download certificates from the remote endpoint.
+        """
+        Download certificates from the remote endpoint.
 
         Force a specific key even if it is not the one which would be
-        downloaded using the identifier specified in the certificate."""
+        downloaded using the identifier specified in the certificate.
+        """
         self.keypath = path
         super(ForcedCertificateUpdater, self).__init__()
 
