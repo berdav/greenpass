@@ -32,6 +32,7 @@ from greenpass.URLs import BASE_URL_DGC
 # Retrieve settings from unified API endpoint
 class SettingsManager(object):
     def __init__(self, cachedir=''):
+        """Download and parse the settings from API endpoint."""
         self.at_date = None
         self.cachedir = cachedir
         self.blocklist = set()

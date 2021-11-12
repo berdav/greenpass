@@ -33,11 +33,13 @@ from greenpass.data import GreenPassKeyManager
 
 class UnrecognizedException(Exception):
     def __init__(self, m):
+        """The greenpass was unrecognized."""
         super(UnrecognizedException, self).__init__(m)
 
 
 class TestResult(object):
     def __init__(self, t):
+        """Get the test result parsing the certificate data."""
         self.t = t
 
     def is_positive(self):
@@ -53,6 +55,7 @@ class TestResult(object):
         return self.is_aladeen()
 
     def __str__(self):
+        """Readable format for test result."""
         if self.is_positive():
             return "Positive"
         elif self.is_negative():
@@ -66,6 +69,7 @@ def _parse_date(d):
 
 class Certificate(object):
     def __init__(self, k):
+        """Certificate class transcription."""
         self.k = k
         self.release_date = None
         self.expiration_date = None
@@ -269,6 +273,7 @@ class Certificate(object):
 # Parse a green pass file
 class GreenPassParser(object):
     def __init__(self, certification, k=GreenPassKeyManager()):
+        """Parse the certificate and create a Certificate class."""
         self.k = k
         # Remove the initial HC1: part and decode the certificate
         data = b":".join(certification.strip().split(b":")[1::])
@@ -481,6 +486,7 @@ class GreenPassParser(object):
 #  output.
 class LogicManager(object):
     def __init__(self, cachedir):
+        """Verification of the certificate."""
         self.cachedir = cachedir
 
     # Verify certificate
@@ -555,13 +561,8 @@ class LogicManager(object):
         cert.set_verified(verified)
 
         valid = verified
-        print(f"  verified     {verified}")
         valid = valid and not expired
-        print(f"  expired      {expired}")
         valid = valid and not positive
-        print(f"  positive     {positive}")
         valid = valid and not unknown_cert
-        print(f"  unknown      {unknown_cert}")
         valid = valid and not blocklisted
-        print(f"  blocklisted  {blocklisted}")
         return valid

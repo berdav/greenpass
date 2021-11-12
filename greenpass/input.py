@@ -30,6 +30,7 @@ from pyzbar import pyzbar
 # PDF Documents
 class InputTransformer(object):
     def __init__(self, path, filetype):
+        """Transform input to the format understood by the application."""
         if filetype == "txt":
             if path == "-":
                 outdata = bytes(

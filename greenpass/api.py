@@ -229,12 +229,7 @@ class CachedCertificateUpdater(CertificateUpdater):
 
 class ForcedCertificateUpdater(CertificateUpdater):
     def __init__(self, path):
-        """
-        Download certificates from the remote endpoint.
-
-        Force a specific key even if it is not the one which would be
-        downloaded using the identifier specified in the certificate.
-        """
+        """Force the key used to verify the certificate."""
         self.keypath = path
         super(ForcedCertificateUpdater, self).__init__()
 

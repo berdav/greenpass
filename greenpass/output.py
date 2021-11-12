@@ -25,6 +25,7 @@ from greenpass.data import GreenPassKeyManager
 
 class NoneOutput(object):
     def __init__(self, colored=colored):
+        """Null output, /dev/null sink."""
         pass
 
     def add_general_info(self, infoname, infoval):
@@ -92,6 +93,7 @@ class NoneOutput(object):
 class OutputManager(NoneOutput):
 
     def __init__(self, colored=colored):
+        """Default printer manager."""
         self.out = ""
         self.colored = colored
 
