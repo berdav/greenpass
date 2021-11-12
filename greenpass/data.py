@@ -17,6 +17,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
+import sys
 import json
 import pickle
 import requests
@@ -249,7 +250,7 @@ class Manufacturer(object):
                 o[el["id_device"]] = el["commercial_name"]
         # TODO: Be more specific on the exceptions
         except Exception:
-            pass
+            print("Warning: cannot download test data", file=sys.stderr)
 
         return o
 
