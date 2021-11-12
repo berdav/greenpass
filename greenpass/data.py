@@ -36,11 +36,9 @@ TESTS_URL = (
 )
 
 
-# Static class with common keys for
-# printing and addressing in the qrcode
-# Can also be localized
 class GreenPassKeyManager(object):
     def __init__(self):
+        """Manage the translation between qrcode keys and readable names."""
         pass
 
     # The first value of these tuples is the key in the qrcode,
@@ -274,6 +272,7 @@ class Manufacturer(object):
 # Disease names
 class Disease(object):
     def __init__(self, t):
+        """Translate disease code to human-readable name."""
         self.t = t
         self.pretty_name = {
             "840539006": "Covid19"
@@ -285,6 +284,7 @@ class Disease(object):
 
 class TestType(object):
     def __init__(self, t):
+        """Translate test code to human-readable name."""
         self.t = t
         self._type = {
             "LP6464-4":   "molecular",
