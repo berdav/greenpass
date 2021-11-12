@@ -195,6 +195,7 @@ class GreenPassKeyManager(object):
 # Vaccine names
 class Vaccine(object):
     def __init__(self, t):
+        """Translate vaccine code to human-readable name."""
         self.t = t
         self.pretty_name = {
             "EU/1/20/1507": "Moderna",
@@ -215,6 +216,7 @@ class Vaccine(object):
 # Manufacturer names
 class Manufacturer(object):
     def __init__(self, t, cachedir=''):
+        """Translate manufacturer code to human-readable name."""
         self.t = t
         # Vaccines
         self.pretty_name = {
