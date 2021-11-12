@@ -80,7 +80,8 @@ class CertificateUpdater(object):
         sys.exit(1)
 
     # Get key from DGC style repository
-    def get_key_dgc(self, idx):
+    @staticmethod
+    def get_key_dgc(idx):
         certificate = None
         r = requests.get("{}".format(BASE_URL_DGCG))
         if r.status_code != 200:
