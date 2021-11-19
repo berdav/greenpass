@@ -16,26 +16,29 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from greenpass.api import *
-from greenpass.data import *
-from greenpass.input import *
-from greenpass.output import *
-from greenpass.logic import *
-from greenpass.settings import *
+from greenpass.api import CertificateUpdater
+from greenpass.api import ForcedCertificateUpdater
+from greenpass.api import CachedCertificateUpdater
+from greenpass.input import InputTransformer
+from greenpass.output import OutputManager
+from greenpass.logic import GreenPassParser, LogicManager
+from greenpass.settings import SettingsManager
 
 import os
+import sys
 import shutil
 import argparse
 import colorama
 import functools
 
 # Cache Directory
-DEFAULT_CACHE_DIR=functools.reduce(
+DEFAULT_CACHE_DIR = functools.reduce(
     os.path.join,
-    [ os.path.expanduser("~"), ".local", "greenpass" ]
+    [os.path.expanduser("~"), ".local", "greenpass"]
 )
 
-if __name__=="__main__":
+
+def setup_argparse():
     parser = argparse.ArgumentParser()
 
     command = parser.add_mutually_exclusive_group(required=True)
@@ -92,40 +95,63 @@ if __name__=="__main__":
     parser.add_argument("--at-date",
                         help="Use AT_DATE instead of the current date")
 
-    args = parser.parse_args()
+    return parser.parse_args()
 
-    cachedir = args.cachedir
-    if args.no_cache:
-        cachedir = ''
 
-    if cachedir and args.clear_cache:
-        shutil.rmtree(cachedir)
+def manage_cache(cachedir, no_cache, clear_cache):
+    outcachedir = cachedir
+    if no_cache:
+        outcachedir = ''
+    elif clear_cache:
+        shutil.rmtree(outcachedir)
 
-    res = -1
+    return outcachedir
 
-    if not args.no_color:
+
+def init_colors(no_color):
+    if not no_color:
         colorama.init()
         from termcolor import colored
     else:
         # Disable colors
-        colored=lambda x,y: x
+        def _uncolor(x, y):
+            return x
+        colored = _uncolor
+
+    return colored
+
+
+def get_filetype(args):
+    (path, filetype) = (None, None)
+    if args.qr is not None:
+        (path, filetype) = (args.qr, "png")
+    if args.pdf is not None:
+        (path, filetype) = (args.pdf, "pdf")
+    if args.txt is not None and args.txt != "":
+        (path, filetype) = (args.txt, "txt")
+
+    return (path, filetype)
+
+
+def main():
+    # Get the arguments
+    args = setup_argparse()
+    # Configure the cache directory
+    cachedir = manage_cache(args.cachedir, args.no_cache, args.clear_cache)
+    # Configure colored output
+    colored = init_colors(args.no_color)
 
     sm = SettingsManager(cachedir)
 
-    if args.at_date != None:
+    if args.at_date is not None:
         sm.set_at_date(args.at_date)
 
-    if args.qr != None:
-        (path, filetype) = (args.qr, "png")
-    if args.pdf != None:
-        (path, filetype) = (args.pdf, "pdf")
-    if args.txt != None and args.txt != "":
-        (path, filetype) = (args.txt, "txt")
+    (path, filetype) = get_filetype(args)
 
-    if args.settings != False:
+    if args.settings:
         out = OutputManager(colored)
         out.dump_settings(sm)
-        sys.exit(1)
+        return 1
 
     data = InputTransformer(path, filetype).get_data()
     gpp = GreenPassParser(data)
@@ -133,11 +159,11 @@ if __name__=="__main__":
     out = OutputManager(colored)
     if args.raw:
         gpp.dump(out)
-        sys.exit(1)
+        return 1
 
     logic = LogicManager(cachedir)
 
-    if args.key != None:
+    if args.key is not None:
         cup = ForcedCertificateUpdater(args.key)
     elif cachedir != '':
         cup = CachedCertificateUpdater(cachedir)
@@ -151,16 +177,18 @@ if __name__=="__main__":
         signature = gpp.get_sign_from_cose()
         phdr, uhdr = gpp.get_headers_from_cose()
         out.dump_cose(phdr, uhdr, signature)
-        sys.exit(1)
+        return 1
 
-    res = logic.verify_certificate(out, gpp, sm, cup,
-                                   consider_blocklist=not args.no_block_list)
+    cert = gpp.get_certificate()
+    res = logic.verify_certificate(cert, sm, cup,
+                                   enable_blocklist=not args.no_block_list)
+
+    out.print_cert(cert, cachedir=cachedir)
+    out.dump()
 
     # Unix return code is inverted
-    if res:
-        retval = 0
-    else:
-        retval = 1
+    return not res
 
-    out.dump()
-    sys.exit(retval)
+
+if __name__ == "__main__":
+    sys.exit(main())

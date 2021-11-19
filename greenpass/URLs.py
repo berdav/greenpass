@@ -17,8 +17,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # Base url to retrieve data (DGC)
-BASE_URL_DGC   = "https://get.dgc.gov.it/v1/dgc/"
+BASE_URL_DGC = "https://get.dgc.gov.it/v1/dgc/"
 # Alternative base url to retrieve data (DGC)
-BASE_URL_DGCG  = "https://dgcg.covidbevis.se/tp/"
+BASE_URL_DGCG = "https://dgcg.covidbevis.se/tp/"
 # Base url to retrieve data (NHS)
-BASE_URL_NHS   = "https://covid-status.service.nhsx.nhs.uk/"
+BASE_URL_NHS = "https://covid-status.service.nhsx.nhs.uk/"

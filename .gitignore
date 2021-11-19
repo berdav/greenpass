@@ -2,3 +2,6 @@ build/
 dist/
 greenpass.egg-info/
 **/__pycache__
+tests/data/private/test/*
+tests/data/private/recovery/*
+tests/data/private/vaccine/*
