@@ -19,7 +19,9 @@
 import os
 import shutil
 from distutils.core import setup
-import setuptools # noqa
+import setuptools
+
+print("Using setuptools {}".format(setuptools.__version__), file=sys.stderr)
 
 maintool = "greenpass"
 
