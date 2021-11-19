@@ -29,4 +29,4 @@ release "$NEXT_VER"
 git status
 git add setup.py
 git commit -m "v$NEXT_VER release"
-git tag "$NEXT_VER"
+git tag "v$NEXT_VER"
