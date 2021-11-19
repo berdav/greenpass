@@ -1,0 +1,24 @@
+name: Push to pypi
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  publish-to-pypi:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: Generate the python package
+        run: |
+          pip install -r requirements.txt
+          # Generate the wheel and source distribution
+          python3 setup.py bdist_wheel sdist
+
+      - name: Publish a Python distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
+
