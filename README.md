@@ -177,7 +177,6 @@ The recovery certification contains an expiration date.  By
 default this date is ignored, this switch re-enables the check
 and consider this date (in addition to the settings date).
 
-
 ## Docker Container
 The docker image shipped with the program can be used in the following
 way:
