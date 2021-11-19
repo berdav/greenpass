@@ -26,6 +26,7 @@ if test "x$NEXT_VER" = "xnewversion"; then
 fi
 
 release "$NEXT_VER"
+git status
 git add setup.py
-git commit -m "$NEXT_VER release"
+git commit -m "v$NEXT_VER release"
 git tag "$NEXT_VER"
