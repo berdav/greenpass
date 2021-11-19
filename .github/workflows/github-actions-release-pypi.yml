@@ -1,13 +1,19 @@
-name: Push to pypi
-on:
-  release:
-    types:
-      - published
+name: Tag and push to pypi
 
+on:
+  push:
+    tags:
+      - "v*"
 jobs:
-  publish-to-pypi:
-    runs-on: ubuntu-latest
+  tagged-release:
+    name: "Tagged Release"
+    runs-on: "ubuntu-latest"
+
     steps:
+      - uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          prerelease: false
       - name: Check out repository code
         uses: actions/checkout@v2
       - name: Generate the python package
