@@ -39,7 +39,7 @@ with open("README.md") as f:
 setup(
     name             = 'greenpass',
     scripts          = [ maintool_dst_path ],
-    version          = '4.1.4',
+    version          = '4.1.5',
     license          = 'LGPLv3',
     description      = 'Scriptable green pass verifier',
     long_description = description,
@@ -48,7 +48,7 @@ setup(
     author           = 'Davide Berardi',
     author_email     = 'berardi.dav@gmail.com',
     url              = 'https://github.com/berdav/greenpass',
-    download_url     = 'https://github.com/berdav/greenpass/archive/refs/tags/v4.1.4.zip',
+    download_url     = 'https://github.com/berdav/greenpass/archive/refs/tags/v4.1.5.zip',
     keywords         = [ 'covid19', 'greenpass', 'certificates', 'authorization' ],
     install_requires = [
         'base45',
