@@ -31,7 +31,7 @@ from greenpass.URLs import BASE_URL_DGC
 
 # Retrieve settings from unified API endpoint
 class SettingsManager(object):
-    def __init__(self, cachedir=''):
+    def __init__(self, cachedir='', consider_recovery_expiration=False):
         """Download and parse the settings from API endpoint."""
         self.at_date = None
         self.cachedir = cachedir
@@ -40,6 +40,7 @@ class SettingsManager(object):
             self.get_cached_settings()
         else:
             self.get_settings()
+        self.consider_recovery_expiration = consider_recovery_expiration
 
     def get_cached_settings(self):
         settings = os.path.join(self.cachedir, "settings")
@@ -213,7 +214,12 @@ class SettingsManager(object):
         valid_until = (recovery_until - self.checktime()).total_seconds()
         valid_until = valid_until / (60 * 60)
 
-        valid_end = min(valid_end, valid_until)
+        # The recovery contains a validity until indication, this seems
+        # to be ignored by verification applications, the following
+        # code re-enables the expiration date contained in the
+        # certificate.
+        if self.consider_recovery_expiration:
+            valid_end = min(valid_end, valid_until)
 
         return int(valid_start), int(valid_end)
 

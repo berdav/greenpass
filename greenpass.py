@@ -95,6 +95,10 @@ def setup_argparse():
     parser.add_argument("--at-date",
                         help="Use AT_DATE instead of the current date")
 
+    parser.add_argument("--recovery-expiration",
+                        action="store_true",
+                        help="Consider the recovery certificate expiration")
+
     return parser.parse_args()
 
 
@@ -141,7 +145,7 @@ def main():
     # Configure colored output
     colored = init_colors(args.no_color)
 
-    sm = SettingsManager(cachedir)
+    sm = SettingsManager(cachedir, args.recovery_expiration)
 
     if args.at_date is not None:
         sm.set_at_date(args.at_date)

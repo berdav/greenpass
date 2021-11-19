@@ -72,9 +72,14 @@ recovery_test() {
 
 	# By default the old recovery included an expiration date.
 	# This is ignored by the current verification apps
-	E="$(get_date "Valid Until" "--$TYPE" "$FILE")"
+	E="$(get_date "Validity Until" "--$TYPE" "$FILE")"
 	N="$(date_evaluate "$E + 1 day" | sed 's/T/-/g')"
 	assert_true "$GP" "--$TYPE" "$FILE" --at-date "$N" --no-block-list
+
+	# Also re-enable the check to see if the expiration date
+	# is correctly considered.
+	assert_false "$GP" "--$TYPE" "$FILE" --at-date "$N" --no-block-list \
+		--recovery-expiration
 
 	# 6 months after, the recovery shall not be valid
 	N="$(date_evaluate "$D + 6 months" | sed 's/T/-/g')"
