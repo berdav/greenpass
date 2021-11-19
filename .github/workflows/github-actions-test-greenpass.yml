@@ -19,4 +19,4 @@ jobs:
           pip install -r requirements.txt
       - name: Run tests
         run: |
-          bash test.sh
+          bash test.sh true
