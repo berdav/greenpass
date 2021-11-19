@@ -254,7 +254,13 @@ class Manufacturer(object):
                 cbor2.dump(self.get_tests_pn(), f)
 
         with open(testcache, 'rb') as f:
-            tests = cbor2.load(f)
+            try:
+                tests = cbor2.load(f)
+            except Exception:
+                print("Corrupted cache {} removing".format(testcache),
+                      file=sys.stderr)
+                os.remove(testcache)
+                tests = {}
 
         return tests
 
