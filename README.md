@@ -1,10 +1,8 @@
 # Green Pass Verifier
-<div style="text-align: center;">
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/575c0631970a4d9a994f18b416e0eefc)](https://www.codacy.com/gh/berdav/greenpass/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=berdav/greenpass&amp;utm_campaign=Badge_Grade)
 ![Github Action Workflow](https://github.com/berdav/greenpass/actions/workflows/github-actions-test-greenpass.yml/badge.svg)
 [![PyPi greenpass](https://badgen.net/pypi/v/greenpass/)](https://pypi.org/project/greenpass/)
 [![Docker greenpass](https://badgen.net/badge/icon/docker?icon=docker&label)](https://hub.docker.com/r/berdav/greenpass)
-</div>
 
 ![A verified green pass](https://github.com/berdav/greenpass/blob/master/img/draghi.png?raw=true)
 
