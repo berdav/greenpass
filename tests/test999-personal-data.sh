@@ -35,6 +35,13 @@ vaccine_test() {
 	# The year after, the vaccine shall not be valid
 	N="$(date_evaluate "$D + 1 year" | sed 's/T/-/g')"
 	assert_false "$GP" "--$TYPE" "$FILE" --at-date "$N" --no-block-list
+
+	# A week before the year, the vaccine shall be valid (if it is a
+	# complete one)
+	N="$(date_evaluate "$D - 15 day + 1 year" | sed 's/T/-/g')"
+	if "$GP" "--$TYPE" "$FILE" --no-color | grep Doses | grep -q '2/2'; then
+		assert_true "$GP" "--$TYPE" "$FILE" --at-date "$N" --no-block-list
+	fi
 }
 
 test_test() {
@@ -65,6 +72,14 @@ recovery_test() {
 	# The day after, the recovery shall be valid
 	N="$(date_evaluate "$D + 1 day" | sed 's/T/-/g')"
 	assert_true "$GP" "--$TYPE" "$FILE" --at-date "$N" --no-block-list
+
+	# Try also with cache
+	N="$(date_evaluate "$D + 1 day" | sed 's/T/-/g')"
+	assert_true "$GP" "--$TYPE" "$FILE" --no-cache --at-date "$N" --no-block-list
+
+	# And clearing the cache
+	N="$(date_evaluate "$D + 1 day" | sed 's/T/-/g')"
+	assert_true "$GP" "--$TYPE" "$FILE" --clear-cache --at-date "$N" --no-block-list
 
 	# The day before, the recovery shall not be valid
 	N="$(date_evaluate "$D - 1 day" | sed 's/T/-/g')"

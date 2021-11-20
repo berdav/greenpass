@@ -1,12 +1,18 @@
 #!/bin/bash
 
-export GP="./greenpass.py"
+GP="./greenpass.py"
 DEBUG="${1:-false}"
 OUT=/dev/null
-if "$DEBUG"; then
+if test "x$DEBUG" = "xtrue"; then
 	OUT=/dev/stdout
 fi
+if test "x$DEBUG" = "xcoverage"; then
+	GP="tools/coverage.sh"
+	OUT=/dev/stdout
+	python3-coverage erase
+fi
 export OUT
+export GP
 shift
 
 set -eu

@@ -13,7 +13,10 @@ GPFILE_RK="tests/data/rk.png"
 assert_file_exists "$GPFILE_AH"
 assert_file_exists "$GPFILE_MF"
 
-rm -rf "$CACHEDIR"
+assert_false "$GP" --no-cache --settings
+assert_false "$GP" --cachedir "$CACHEDIR" --clear-cache --settings
+
+assert_false "$GP" --cachedir "$CACHEDIR" --settings
 assert_false "$GP" --cachedir "$CACHEDIR" --settings
 assert_file_exists "$CACHEDIR/settings"
 

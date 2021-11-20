@@ -20,7 +20,7 @@ from greenpass.api import CertificateUpdater
 from greenpass.api import ForcedCertificateUpdater
 from greenpass.api import CachedCertificateUpdater
 from greenpass.input import InputTransformer
-from greenpass.output import OutputManager
+from greenpass.output import OutputManager, NoneOutput
 from greenpass.logic import GreenPassParser, LogicManager
 from greenpass.settings import SettingsManager
 
@@ -99,6 +99,10 @@ def setup_argparse():
                         action="store_true",
                         help="Consider the recovery certificate expiration")
 
+    parser.add_argument("--batch",
+                        action="store_true",
+                        help="Do not print anything")
+
     return parser.parse_args()
 
 
@@ -152,15 +156,20 @@ def main():
 
     (path, filetype) = get_filetype(args)
 
+    if args.batch:
+        om = NoneOutput
+    else:
+        om = OutputManager
+
     if args.settings:
-        out = OutputManager(colored)
+        out = om(colored)
         out.dump_settings(sm)
         return 1
 
     data = InputTransformer(path, filetype).get_data()
     gpp = GreenPassParser(data)
 
-    out = OutputManager(colored)
+    out = om(colored)
     if args.raw:
         gpp.dump(out)
         return 1

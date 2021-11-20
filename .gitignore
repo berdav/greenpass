@@ -5,3 +5,5 @@ greenpass.egg-info/
 tests/data/private/test/*
 tests/data/private/recovery/*
 tests/data/private/vaccine/*
+.coverage
+htmlcov
