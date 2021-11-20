@@ -233,7 +233,7 @@ class Manufacturer(object):
         o = {}
         try:
             r = requests.get(TESTS_URL, allow_redirects=True, timeout=10)
-        except requests.exception.ReadTimeout:
+        except requests.exceptions.ReadTimeout:
             # The operation timed out, return empty value
             return o
 
