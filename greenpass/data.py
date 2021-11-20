@@ -231,16 +231,25 @@ class Manufacturer(object):
     @staticmethod
     def get_tests_pn():
         o = {}
-        r = requests.get(TESTS_URL, allow_redirects=True, timeout=10)
-        if r.status_code != 200:
+        try:
+            r = requests.get(TESTS_URL, allow_redirects=True, timeout=10)
+        except requests.exception.ReadTimeout:
+            # The operation timed out, return empty value
             return o
+
+        if r.status_code != 200:
+            # The operation did not succeded, return empty value
+            return o
+
         try:
             tests = json.loads(r.text)
             for el in tests["deviceList"]:
                 o[el["id_device"]] = el["commercial_name"]
         # TODO: Be more specific on the exceptions
         except Exception:
+            # The data cannot be downloaded, return value correctly parsed
             print("Warning: cannot download test data", file=sys.stderr)
+            return o
 
         return o
 
