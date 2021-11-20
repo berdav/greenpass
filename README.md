@@ -1,5 +1,6 @@
 # Green Pass Verifier
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/575c0631970a4d9a994f18b416e0eefc)](https://www.codacy.com/gh/berdav/greenpass/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=berdav/greenpass&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge Coverage](https://app.codacy.com/project/badge/Coverage/575c0631970a4d9a994f18b416e0eefc)](https://www.codacy.com/gh/berdav/greenpass/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=berdav/greenpass&amp;utm_campaign=Badge_Coverage)
 ![Github Action Workflow](https://github.com/berdav/greenpass/actions/workflows/github-actions-test-greenpass.yml/badge.svg)
 [![PyPi greenpass](https://badgen.net/pypi/v/greenpass/)](https://pypi.org/project/greenpass/)
 [![Docker greenpass](https://badgen.net/badge/icon/docker?icon=docker&label)](https://hub.docker.com/r/berdav/greenpass)
