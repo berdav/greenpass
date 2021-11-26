@@ -162,6 +162,26 @@ class Localized_GreenPassKeyManager(object):
     def get_doses(self):
         return self.get_key("_dos")
 
+    def get_expired_since(self):
+        return self.get_key("_expired_since")
+
+    def get_hours(self):
+        return self.get_key("_hours")
+
+    def get_hours_left(self):
+        return self.get_key("_hours_left")
+
+    def get_not_yet_valid(self):
+        return self.get_key("_not_yet_valid")
+
+    def get_hours_to_validity(self):
+        return self.get_key("_hours_to_validity")
+
+    def get_months(self):
+        return self.get_key("_months")
+
+    def get_days(self):
+        return self.get_key("_days")
 
 
 class IT_GreenPassKeyManager(Localized_GreenPassKeyManager):
@@ -204,8 +224,20 @@ class IT_GreenPassKeyManager(Localized_GreenPassKeyManager):
             "_dos": "Dosi",
             "_block": "Bloccato",
             "_False": "No",
-            "_True": "Sì"
+            "_True": "Sì",
+            "_expired_since": "Scaduto da",
+            "_hours": "Ore",
+            "_hours_left": "Ore rimanenti",
+            "_not_yet_valid": "Non ancora valido",
+            "_hours_to_validity": "Ore rimanenti per risultare valido",
+            "_days": "Giorni",
+            "_months": "Mesi"
         }
+
+    @staticmethod
+    def get_date_format():
+        return "Data {}"
+
 
 class DE_GreenPassKeyManager(Localized_GreenPassKeyManager):
     def __init__(self):
@@ -247,8 +279,19 @@ class DE_GreenPassKeyManager(Localized_GreenPassKeyManager):
             "_dos": "Dosen",
             "_block": "Verstopft",
             "_False": "Nein",
-            "_True": "Ja"
+            "_True": "Ja",
+            "_expired_since": "Expired Since",
+            "_hours": "Stunden",
+            "_hours_left": "Stunden übrig",
+            "_not_yet_valid": "noch nicht gültig",
+            "_hours_to_validity": "Stunden bis Gültigkeit",
+            "_days": "Tage",
+            "_months": "Monate"
         }
+
+    @staticmethod
+    def get_date_format():
+        return "{}datum"
 
 class EN_GreenPassKeyManager(Localized_GreenPassKeyManager):
     def __init__(self):
@@ -290,8 +333,19 @@ class EN_GreenPassKeyManager(Localized_GreenPassKeyManager):
             "_dos": "Doses",
             "_block": "Blocklisted",
             "_False": "False",
-            "_True": "True"
+            "_True": "True",
+            "_expired_since": "Expired Since",
+            "_hours": "Hours",
+            "_hours_left": "Hours left",
+            "_not_yet_valid": "Not yet valid",
+            "_hours_to_validity": "Hours to validity",
+            "_days": "Days",
+            "_months": "Months"
         }
+
+    @staticmethod
+    def get_date_format():
+        return "{} Date"
 
 class GreenPassKeyManager(object):
     def __init__(self):

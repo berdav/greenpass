@@ -61,7 +61,8 @@ class NoneOutput(object):
     def add_cert_info_error(self, infoname, infoval):
         pass
 
-    def add_remaining_time(self, certtype, certdate, level, remaining_days):
+    def add_remaining_time(self, certtype, certdate, level,
+                           remaining_days, km):
         pass
 
     def get_not_yet_valid(self, hours_to_valid):
@@ -141,7 +142,8 @@ class OutputManager(NoneOutput):
         if infoval is not None:
             self.add_cert_info(infoname, self.colored(infoval, "red"))
 
-    def add_remaining_time(self, certtype, certdate, level, remaining_days):
+    def add_remaining_time(self, certtype, certdate, level,
+                           remaining_days, km):
         if level == 0:
             color = "white"
         if level == 1:
@@ -152,33 +154,45 @@ class OutputManager(NoneOutput):
             color = "red"
 
         self.out += "  {:28s} {} ({})\n".format(
-            "{} Date".format(certtype),
+            km.get_date_format().format(certtype),
             self.colored(certdate, color),
             self.colored(remaining_days, color)
         )
 
-    def get_not_yet_valid(self, hours_to_valid):
-        return "Not yet valid, {:.0f} hours to validity, {} days".format(
-                hours_to_valid, int(hours_to_valid / 24)
+    def get_not_yet_valid(self, hours_to_valid, km):
+        return "{}, {:.0f} {}, {} {}".format(
+                km.get_not_yet_valid()[1],
+                hours_to_valid,
+                km.get_hours_to_validity()[1],
+                int(hours_to_valid / 24),
+                km.get_days()[1]
         )
 
-    def get_expired(self, remaining_hours):
-        return "Expired since {:.0f} hours, {} days".format(
+    def get_expired(self, remaining_hours, km):
+        return "{} {:.0f} {}, {} {}".format(
+                    km.get_expired_since()[1],
                     -remaining_hours,
-                    -int(remaining_hours / 24)
+                    km.get_hours()[1],
+                    -int(remaining_hours / 24),
+                    km.get_days()[1]
                 )
 
-    def get_hours_left(self, remaining_hours):
-        return "{:.0f} hours left ({} days)".format(
+    def get_hours_left(self, remaining_hours, km):
+        return "{:.0f} {} {} ({} {})".format(
                     remaining_hours,
-                    int(remaining_hours / 24)
+                    km.get_hours_left()[1],
+                    int(remaining_hours / 24),
+                    km.get_days()[1]
                 )
 
-    def get_months_left(self, remaining_hours):
-        return "{:.0f} hours left, {} days, ~ {} months".format(
+    def get_months_left(self, remaining_hours, km):
+        return "{:.0f} {}, {} {}, ~ {} {}".format(
                 remaining_hours,
+                km.get_hours_left()[1],
                 int(remaining_hours / 24),
-                round(remaining_hours / 24 / 30)
+                km.get_days()[1],
+                round(remaining_hours / 24 / 30),
+                km.get_months()[1]
         )
 
     def dump(self, file=sys.stdout):
@@ -330,17 +344,17 @@ class OutputManager(NoneOutput):
 
         if hours_to_valid < 0:
             level = 3
-            remaining_days = self.get_not_yet_valid(-hours_to_valid)
+            remaining_days = self.get_not_yet_valid(-hours_to_valid, km)
         elif remaining_hours <= 0:
             level = 3
-            remaining_days = self.get_expired(remaining_hours)
+            remaining_days = self.get_expired(remaining_hours, km)
         elif remaining_hours * 24 < 14:
             level = 2
-            remaining_hours = self.get_hours_left(remaining_hours)
+            remaining_hours = self.get_hours_left(remaining_hours, km)
             remaining_days = remaining_hours
         else:
             level = 1
-            remaining_days = self.get_months_left(remaining_hours)
+            remaining_days = self.get_months_left(remaining_hours, km)
 
         date = None
         if cert.get_type() == "test":
@@ -354,8 +368,8 @@ class OutputManager(NoneOutput):
             date = cert.get_validity_from()
 
         self.add_remaining_time(
-            cert.get_type().capitalize(), date,
-            level, remaining_days
+            km.get_key(cert.get_type()[0])[1], date,
+            level, remaining_days, km
         )
 
         if cert.get_verified():
