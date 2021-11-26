@@ -187,6 +187,16 @@ and consider this date (in addition to the settings date).
 ```
 Remove all the outputs.
 
+```bash
+--language LANGUAGE
+```
+Localize the output in LANGUAGE.  Currently the following languages are
+available:
+
+* English
+* Italian
+* German
+
 ## Docker Container
 The docker image shipped with the program can be used in the following
 way:
