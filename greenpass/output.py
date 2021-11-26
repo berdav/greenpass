@@ -88,7 +88,8 @@ class NoneOutput(object):
     def rawdump(self, data):
         pass
 
-    def print_cert(self, cert, km=GreenPassKeyManager(), cachedir=''):
+    def print_cert(self, cert, km=GreenPassKeyManager(),
+                   cachedir='', language=''):
         pass
 
 
@@ -228,11 +229,12 @@ class OutputManager(NoneOutput):
 
     def _print_common_fields(self, cert, km, cachedir):
         self.add_general_info_info(
-            "Certificate Type", cert.get_type().capitalize()
+            km.get_certificate_type()[1],
+            km.translate_type(cert.get_type())
         )
 
         for k, v in cert.get_info()["qr"].items():
-            self.add_general_info(k, v)
+            self.add_general_info(km.get_key(k)[1], v)
 
         self.add_general_info(
             km.get_release_date()[1], cert.get_release_date()
@@ -243,14 +245,14 @@ class OutputManager(NoneOutput):
         )
 
         for k, v in cert.get_info()["personal"].items():
-            self.add_general_info(k, v)
+            self.add_general_info(km.get_key(k)[1], km.get_key(str(v))[1])
 
         self.add_cert_info_info(
             km.get_target_disease()[1],
             Disease(cert.get_target_disease()).get_pretty_name()
         )
         for k, v in cert.get_info()["cert"].items():
-            self.add_cert_info(k, v)
+            self.add_cert_info(km.get_key(k)[1], km.get_key(str(v))[1])
 
         self.add_cert_info(
             km.get_certificate_id()[1], cert.get_certificate_id()
@@ -261,7 +263,8 @@ class OutputManager(NoneOutput):
         else:
             printfun = self.add_cert_info_ok
         printfun(
-            km.get_blocklisted()[1], cert.get_blocklisted()
+            km.get_blocklisted()[1],
+            km.get_key("_"+str(cert.get_blocklisted()))[1]
         )
 
     def _print_vaccine_fields(self, cert, km, cachedir):
@@ -316,7 +319,10 @@ class OutputManager(NoneOutput):
             cert.get_validity_until()
         )
 
-    def print_cert(self, cert, km=GreenPassKeyManager(), cachedir=''):
+    def print_cert(self, cert, kmg=GreenPassKeyManager(),
+                   cachedir='', language="en"):
+        km =  kmg.get_localization(language)
+
         self._print_common_fields(cert, km, cachedir)
 
         hours_to_valid = cert.get_hours_to_valid()
@@ -357,5 +363,6 @@ class OutputManager(NoneOutput):
         else:
             printfun = self.add_general_info_error
         printfun(
-            km.get_verified()[1], cert.get_verified()
+            km.get_verified()[1],
+            km.get_key("_"+str(cert.get_verified()))[1]
         )

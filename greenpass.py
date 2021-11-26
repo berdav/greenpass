@@ -103,6 +103,10 @@ def setup_argparse():
                         action="store_true",
                         help="Do not print anything")
 
+    parser.add_argument("--language",
+                        default="en",
+                        help="Select the language, use two letter code")
+
     return parser.parse_args()
 
 
@@ -196,7 +200,7 @@ def main():
     res = logic.verify_certificate(cert, sm, cup,
                                    enable_blocklist=not args.no_block_list)
 
-    out.print_cert(cert, cachedir=cachedir)
+    out.print_cert(cert, cachedir=cachedir, language=args.language)
     out.dump()
 
     # Unix return code is inverted

@@ -27,152 +27,10 @@ TESTS_URL = (
 )
 
 
-class GreenPassKeyManager(object):
+class Localized_GreenPassKeyManager(object):
     def __init__(self):
         """Manage the translation between qrcode keys and readable names."""
         pass
-
-    # The first value of these tuples is the key in the qrcode,
-    # the second is the localized info
-    @staticmethod
-    def get_release_country():
-        return (1, "Release Country")
-
-    @staticmethod
-    def get_release_date():
-        return (6, "Release Date")
-
-    @staticmethod
-    def get_expiration_date():
-        return (4, "Expiration Date")
-
-    @staticmethod
-    def get_version():
-        return ("ver", "Version")
-
-    @staticmethod
-    def get_date_of_birth():
-        return ("dob", "Date of Birth")
-
-    @staticmethod
-    def get_name():
-        return ("nam", "Name")
-
-    @staticmethod
-    def get_personal_data():
-        return (-260, "Personal Data")
-
-    @staticmethod
-    def get_personal_info():
-        return (1, "Personal Info")
-
-    @staticmethod
-    def get_first_name():
-        return ("gn", "First Name")
-
-    @staticmethod
-    def get_last_name():
-        return ("fn", "Family Name")
-
-    @staticmethod
-    def get_vaccine():
-        return ("v", "Vaccine")
-
-    @staticmethod
-    def get_test():
-        return ("t", "Test")
-
-    @staticmethod
-    def get_recovery():
-        return ("r", "Recovery")
-
-    @staticmethod
-    def get_target_disease():
-        return ("tg", "Target Disease")
-
-    @staticmethod
-    def get_vaccination_country():
-        return ("co", "Vaccination or Test Country")
-
-    @staticmethod
-    def get_certificate_issuer():
-        return ("is", "Certificate Issuer")
-
-    @staticmethod
-    def get_certificate_id():
-        return ("ci", "Certificate ID")
-
-    @staticmethod
-    def get_first_positive_test():
-        return ("fr", "First Positive Test")
-
-    @staticmethod
-    def get_validity_from():
-        return ("df", "Validity From")
-
-    @staticmethod
-    def get_validity_until():
-        return ("du", "Validity Until")
-
-    @staticmethod
-    def get_manufacturer():
-        return ("ma", "Manufacturer and Type")
-
-    @staticmethod
-    def get_test_type():
-        return ("tt", "Test type")
-
-    @staticmethod
-    def get_test_name():
-        return ("tn", "Test name")
-
-    @staticmethod
-    def get_date_of_collection():
-        return ("sc", "Date of collection")
-
-    @staticmethod
-    def get_blocklisted():
-        return (None, "Blocklisted")
-
-    @staticmethod
-    def get_test_result():
-        return ("tr", "Test result")
-
-    @staticmethod
-    def get_testing_center():
-        return ("tc", "Testing center")
-
-    @staticmethod
-    def get_dose_number():
-        return ("dn", "Dose Number")
-
-    @staticmethod
-    def get_total_doses():
-        return ("sd", "Total Doses")
-
-    @staticmethod
-    def get_vaccine_pn():
-        return ("mp", "Vaccine Product Number")
-
-    @staticmethod
-    def get_vaccine_type():
-        return ("vp", "Vaccine Type")
-
-    @staticmethod
-    def get_vaccination_date():
-        return ("dt", "Vaccination Date")
-
-    @staticmethod
-    def get_certificate_type():
-        return ("", "Certificate Type")
-
-    @staticmethod
-    def get_verified():
-        return ("", "Verified")
-
-    @staticmethod
-    def get_doses():
-        return ("", "Doses")
 
     def get_cert_type_long_name(self, t):
         if t == self.get_vaccine()[0]:
@@ -181,6 +39,275 @@ class GreenPassKeyManager(object):
             return self.get_test()[1]
         if t == self.get_recovery()[0]:
             return self.get_recovery()[1]
+
+    def translate_type(self, t):
+        if t == "vaccine":
+            return self.get_vaccine()[1]
+        elif t == "test":
+            return self.get_test()[1]
+        elif t == "recovery":
+            return self.get_recovery()[1]
+
+        return t
+
+    # The first value of these tuples is the key in the qrcode,
+    # the second is the localized info
+    def get_key(self, k):
+        return k, self._data.get(k, k)
+
+    def get_release_country(self):
+        return self.get_key(1)
+
+    def get_release_date(self):
+        return self.get_key(6)
+
+    def get_expiration_date(self):
+        return self.get_key(4)
+
+    def get_version(self):
+        return self.get_key("ver")
+
+    def get_date_of_birth(self):
+        return self.get_key("dob")
+
+    def get_name(self):
+        return self.get_key("nam")
+
+    def get_personal_data(self):
+        return self.get_key(-260)
+
+    def get_personal_info(self):
+        # Personal info has a special key which clashes with the
+        # release country one.
+        return 1, self.get_key("_per")[1]
+
+    def get_first_name(self):
+        return self.get_key("gn")
+
+    def get_last_name(self):
+        return self.get_key("fn")
+
+    def get_vaccine(self):
+        return self.get_key("v")
+
+    def get_test(self):
+        return self.get_key("t")
+
+    def get_recovery(self):
+        return self.get_key("r")
+
+    def get_target_disease(self):
+        return self.get_key("tg")
+
+    def get_vaccination_country(self):
+        return self.get_key("co")
+
+    def get_certificate_issuer(self):
+        return self.get_key("is")
+
+    def get_certificate_id(self):
+        return self.get_key("ci")
+
+    def get_first_positive_test(self):
+        return self.get_key("fr")
+
+    def get_validity_from(self):
+        return self.get_key("df")
+
+    def get_validity_until(self):
+        return self.get_key("du")
+
+    def get_manufacturer(self):
+        return self.get_key("ma")
+
+    def get_test_type(self):
+        return self.get_key("tt")
+
+    def get_test_name(self):
+        return self.get_key("tn")
+
+    def get_date_of_collection(self):
+        return self.get_key("sc")
+
+    def get_blocklisted(self):
+        return self.get_key("_block")
+
+    def get_test_result(self):
+        return self.get_key("tr")
+
+    def get_testing_center(self):
+        return self.get_key("tc")
+
+    def get_dose_number(self):
+        return self.get_key("dn")
+
+    def get_total_doses(self):
+        return self.get_key("sd")
+
+    def get_vaccine_pn(self):
+        return self.get_key("mp")
+
+    def get_vaccine_type(self):
+        return self.get_key("vp")
+
+    def get_vaccination_date(self):
+        return self.get_key("dt")
+
+    def get_certificate_type(self):
+        return self.get_key("_typ")
+
+    def get_verified(self):
+        return self.get_key("_ver")
+
+    def get_doses(self):
+        return self.get_key("_dos")
+
+
+
+class IT_GreenPassKeyManager(Localized_GreenPassKeyManager):
+    def __init__(self):
+        """Italian localized greenpass strings"""
+        self._data = {
+            1: "Paese di rilascio",
+            6: "Data di rilascio",
+            4: "Data di scadenza",
+            "ver": "Versione",
+            "dob": "Data di Nascita",
+            "nam": "Nome",
+            -260: "Dati personali",
+            "_per": "Informazioni personali",
+            "gn": "Nome",
+            "fn": "Cognome",
+            "v": "Vaccino",
+            "t": "Test",
+            "r": "Recupero",
+            "tg": "Malattia",
+            "co": "Paese di vaccinazione o test",
+            "is": "Ente di rilascio",
+            "ci": "ID Certificato",
+            "fr": "Data primo test positivo",
+            "df": "Valido da",
+            "du": "Valido fino a",
+            "ma": "Produttore e tipo",
+            "tt": "Tipo di test",
+            "tn": "Nome del test",
+            "sc": "Data di analisi",
+            "dt": "Data di vaccinazione",
+            "tr": "Risultato del test",
+            "tc": "Centro di test",
+            "dn": "Dose numero",
+            "sd": "Dosi totali",
+            "mp": "Codice del vaccino",
+            "vp": "Tipo di vaccino",
+            "_typ": "Tipo di certificato",
+            "_ver": "Verificato",
+            "_dos": "Dosi",
+            "_block": "Bloccato",
+            "_False": "No",
+            "_True": "Sì"
+        }
+
+class DE_GreenPassKeyManager(Localized_GreenPassKeyManager):
+    def __init__(self):
+        """German localized greenpass strings"""
+        self._data = {
+            1: "Freigabeland",
+            6: "Veröffentlichungsdatum",
+            4: "Verfallsdatum",
+            "ver": "Version",
+            "dob": "Geburtsdatum",
+            "nam": "Name",
+            -260: "Persönliche Daten",
+            "_per": "Persönliche Informationen",
+            "gn": "Vorname",
+            "fn": "Name",
+            "v": "Impfung",
+            "t": "Prüfung",
+            "r": "Erholung",
+            "tg": "Zielkrankheit",
+            "co": "Impfland",
+            "is": "Zertifikataussteller",
+            "ci": "Zertifikats-ID",
+            "fr": "Erster Positiver Test",
+            "df": "Gültigkeit ab",
+            "du": "Gültigkeit bis",
+            "ma": "Hersteller und Typ",
+            "tt": "Testtyp",
+            "tn": "Testname",
+            "sc": "Datum der Abholung",
+            "tr": "Testergebnis",
+            "tc": "Testzentrum",
+            "dn": "Dosisnummer",
+            "sd": "Gesamtdosen",
+            "mp": "Impfcode",
+            "vp": "Impftyp",
+            "dt": "Impfdatum",
+            "_typ": "Art des Zertifikats",
+            "_ver": "Verifiziert",
+            "_dos": "Dosen",
+            "_block": "Verstopft",
+            "_False": "Nein",
+            "_True": "Ja"
+        }
+
+class EN_GreenPassKeyManager(Localized_GreenPassKeyManager):
+    def __init__(self):
+        """English localized greenpass strings"""
+        self._data = {
+            1: "Release Country",
+            6: "Release Date",
+            4: "Expiration Date",
+            "ver": "Version",
+            "dob": "Date of Birth",
+            "nam": "Name",
+            -260: "Personal Data",
+            "_per": "Personal Info",
+            "gn": "First Name",
+            "fn": "Family Name",
+            "v": "Vaccine",
+            "t": "Test",
+            "r": "Recovery",
+            "tg": "Target Disease",
+            "co": "Vaccination or Test Country",
+            "is": "Certificate Issuer",
+            "ci": "Certificate ID",
+            "fr": "First Positive Test",
+            "df": "Validity From",
+            "du": "Validity Until",
+            "ma": "Manufacturer and Type",
+            "tt": "Test type",
+            "tn": "Test name",
+            "sc": "Date of collection",
+            "tr": "Test result",
+            "tc": "Testing center",
+            "dn": "Dose Number",
+            "sd": "Total Doses",
+            "mp": "Vaccine Product Number",
+            "vp": "Vaccine Type",
+            "dt": "Vaccination Date",
+            "_typ": "Certificate Type",
+            "_ver": "Verified",
+            "_dos": "Doses",
+            "_block": "Blocklisted",
+            "_False": "False",
+            "_True": "True"
+        }
+
+class GreenPassKeyManager(object):
+    def __init__(self):
+        """Dispatch the localized key values"""
+
+    @staticmethod
+    def get_localization(language="en"):
+        if language == "it":
+            return IT_GreenPassKeyManager()
+        elif language == "de":
+            return DE_GreenPassKeyManager()
+        else:
+            return EN_GreenPassKeyManager()
+
+    def get_default(self):
+        return self.get_localization()
 
 
 # Vaccine names

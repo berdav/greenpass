@@ -150,21 +150,21 @@ class Certificate(object):
 
         # Filter table to process data
         self.filter_table = {
-            self.k.get_target_disease()[1]:     self.set_target_disease,
-            self.k.get_dose_number()[1]:        self.set_dose_number,
-            self.k.get_total_doses()[1]:        self.set_total_doses,
-            self.k.get_certificate_id()[1]:     self.set_certificate_id,
-            self.k.get_validity_from()[1]:      self.set_validity_from,
-            self.k.get_validity_until()[1]:     self.set_validity_until,
-            self.k.get_vaccine_type()[1]:       self.set_vaccine_type,
-            self.k.get_test_type()[1]:          self.set_test_type,
-            self.k.get_manufacturer()[1]:       self.set_manufacturer,
-            self.k.get_vaccine_pn()[1]:         self.set_vaccine_pn,
-            self.k.get_release_date()[1]:       self.set_release_date,
-            self.k.get_expiration_date()[1]:    self.set_expiration_date,
-            self.k.get_date_of_collection()[1]: self.set_date_of_collection,
-            self.k.get_vaccination_date()[1]:   self.set_vaccination_date,
-            self.k.get_test_result()[1]:        self.set_test_result,
+            self.k.get_target_disease()[0]:     self.set_target_disease,
+            self.k.get_dose_number()[0]:        self.set_dose_number,
+            self.k.get_total_doses()[0]:        self.set_total_doses,
+            self.k.get_certificate_id()[0]:     self.set_certificate_id,
+            self.k.get_validity_from()[0]:      self.set_validity_from,
+            self.k.get_validity_until()[0]:     self.set_validity_until,
+            self.k.get_vaccine_type()[0]:       self.set_vaccine_type,
+            self.k.get_test_type()[0]:          self.set_test_type,
+            self.k.get_manufacturer()[0]:       self.set_manufacturer,
+            self.k.get_vaccine_pn()[0]:         self.set_vaccine_pn,
+            self.k.get_release_date()[0]:       self.set_release_date,
+            self.k.get_expiration_date()[0]:    self.set_expiration_date,
+            self.k.get_date_of_collection()[0]: self.set_date_of_collection,
+            self.k.get_vaccination_date()[0]:   self.set_vaccination_date,
+            self.k.get_test_result()[0]:        self.set_test_result,
         }
 
     # Unstructured data (just for print, not used)
@@ -354,8 +354,9 @@ class Certificate(object):
 
 # Parse a green pass file
 class GreenPassParser(object):
-    def __init__(self, certification, k=GreenPassKeyManager()):
+    def __init__(self, certification, km=GreenPassKeyManager()):
         """Parse the certificate and create a Certificate class."""
+        k = km.get_default()
         self.k = k
         # Remove the initial HC1: part and decode the certificate
         data = b":".join(certification.strip().split(b":")[1::])
@@ -370,15 +371,15 @@ class GreenPassParser(object):
         self.payload = cbor2.loads(self.cose.payload)
 
         self.qr_info = {
-            k.get_release_country()[1]: self.payload[
+            k.get_release_country()[0]: self.payload[
                 k.get_release_country()[0]
             ],
 
-            k.get_release_date()[1]:    int(self.payload[
+            k.get_release_date()[0]:    int(self.payload[
                 k.get_release_date()[0]
             ]),
 
-            k.get_expiration_date()[1]: int(self.payload[
+            k.get_expiration_date()[0]: int(self.payload[
                 k.get_expiration_date()[0]
             ]),
         }
@@ -387,12 +388,12 @@ class GreenPassParser(object):
             k.get_personal_info()[0]
         ]
         self.personal_info = {
-            k.get_version()[1]:       personal_data[k.get_version()[0]],
-            k.get_date_of_birth()[1]: personal_data[k.get_date_of_birth()[0]],
-            k.get_first_name()[1]:    personal_data[k.get_name()[0]][
+            k.get_version()[0]:       personal_data[k.get_version()[0]],
+            k.get_date_of_birth()[0]: personal_data[k.get_date_of_birth()[0]],
+            k.get_first_name()[0]:    personal_data[k.get_name()[0]][
                 k.get_first_name()[0]
             ],
-            k.get_last_name()[1]:     personal_data[k.get_name()[0]][
+            k.get_last_name()[0]:     personal_data[k.get_name()[0]][
                 k.get_last_name()[0]
             ],
         }
@@ -413,79 +414,79 @@ class GreenPassParser(object):
         for el in personal_data[self.certificate_type]:
             cert = {
                 # Common
-                k.get_target_disease()[1]:      el[
+                k.get_target_disease()[0]:      el[
                     k.get_target_disease()[0]
                 ],
 
-                k.get_vaccination_country()[1]: el[
+                k.get_vaccination_country()[0]: el[
                     k.get_vaccination_country()[0]
                 ],
 
-                k.get_certificate_issuer()[1]:  el[
+                k.get_certificate_issuer()[0]:  el[
                     k.get_certificate_issuer()[0]
                 ],
 
-                k.get_certificate_id()[1]:      el[
+                k.get_certificate_id()[0]:      el[
                     k.get_certificate_id()[0]
                 ],
 
                 # Recovery
-                k.get_first_positive_test()[1]: el.get(
+                k.get_first_positive_test()[0]: el.get(
                     k.get_first_positive_test()[0], None
                 ),
 
-                k.get_validity_from()[1]:       el.get(
+                k.get_validity_from()[0]:       el.get(
                     k.get_validity_from()[0], None
                 ),
 
-                k.get_validity_until()[1]:      el.get(
+                k.get_validity_until()[0]:      el.get(
                     k.get_validity_until()[0], None
                 ),
 
                 # Common for Test and Vaccine
-                k.get_manufacturer()[1]:        el.get(
+                k.get_manufacturer()[0]:        el.get(
                     k.get_manufacturer()[0], None
                 ),
 
                 # Test
-                k.get_test_type()[1]:           el.get(
+                k.get_test_type()[0]:           el.get(
                     k.get_test_type()[0], None
                 ),
 
-                k.get_test_name()[1]:           el.get(
+                k.get_test_name()[0]:           el.get(
                     k.get_test_name()[0], None
                 ),
 
-                k.get_date_of_collection()[1]:  el.get(
+                k.get_date_of_collection()[0]:  el.get(
                     k.get_date_of_collection()[0], None
                 ),
 
-                k.get_test_result()[1]:         el.get(
+                k.get_test_result()[0]:         el.get(
                     k.get_test_result()[0], None
                 ),
 
-                k.get_testing_center()[1]:      el.get(
+                k.get_testing_center()[0]:      el.get(
                     k.get_testing_center()[0], None
                 ),
 
                 # Vaccine
-                k.get_dose_number()[1]:         int(el.get(
+                k.get_dose_number()[0]:         int(el.get(
                     k.get_dose_number()[0], 0
                 )),
 
-                k.get_total_doses()[1]:         int(el.get(
+                k.get_total_doses()[0]:         int(el.get(
                     k.get_total_doses()[0], 0
                 )),
 
-                k.get_vaccine_pn()[1]:          el.get(
+                k.get_vaccine_pn()[0]:          el.get(
                     k.get_vaccine_pn()[0], None
                 ),
 
-                k.get_vaccine_type()[1]:        el.get(
+                k.get_vaccine_type()[0]:        el.get(
                     k.get_vaccine_type()[0], None
                 ),
 
-                k.get_vaccination_date()[1]:    el.get(
+                k.get_vaccination_date()[0]:    el.get(
                     k.get_vaccination_date()[0], None
                 )
 
@@ -576,7 +577,6 @@ class LogicManager(object):
     def verify_certificate(cert, sm, cup,
                            enable_blocklist=True,
                            raw=False,
-                           k=GreenPassKeyManager(),
                            verificator_key=None):
 
         expired = False
