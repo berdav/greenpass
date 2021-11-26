@@ -186,7 +186,7 @@ class Localized_GreenPassKeyManager(object):
 
 class IT_GreenPassKeyManager(Localized_GreenPassKeyManager):
     def __init__(self):
-        """Italian localized greenpass strings"""
+        """Italian localized greenpass strings."""
         self._data = {
             1: "Paese di rilascio",
             6: "Data di rilascio",
@@ -241,7 +241,7 @@ class IT_GreenPassKeyManager(Localized_GreenPassKeyManager):
 
 class DE_GreenPassKeyManager(Localized_GreenPassKeyManager):
     def __init__(self):
-        """German localized greenpass strings"""
+        """German localized greenpass strings."""
         self._data = {
             1: "Freigabeland",
             6: "Veröffentlichungsdatum",
@@ -296,7 +296,7 @@ class DE_GreenPassKeyManager(Localized_GreenPassKeyManager):
 
 class EN_GreenPassKeyManager(Localized_GreenPassKeyManager):
     def __init__(self):
-        """English localized greenpass strings"""
+        """English localized greenpass strings."""
         self._data = {
             1: "Release Country",
             6: "Release Date",
@@ -351,7 +351,7 @@ class EN_GreenPassKeyManager(Localized_GreenPassKeyManager):
 
 class GreenPassKeyManager(object):
     def __init__(self):
-        """Dispatch the localized key values"""
+        """Dispatch the localized key values."""
 
     def get_localization(self, language="en"):
         if language == "it":

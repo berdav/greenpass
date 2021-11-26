@@ -65,16 +65,16 @@ class NoneOutput(object):
                            remaining_days, km):
         pass
 
-    def get_not_yet_valid(self, hours_to_valid):
+    def get_not_yet_valid(self, hours_to_valid, km):
         pass
 
-    def get_expired(self, remaining_hours):
+    def get_expired(self, remaining_hours, km):
         pass
 
-    def get_hours_left(self, remaining_hours):
+    def get_hours_left(self, remaining_hours, km):
         pass
 
-    def get_months_left(self, remaining_hours):
+    def get_months_left(self, remaining_hours, km):
         pass
 
     def dump(self, file=sys.stdout):
@@ -89,7 +89,7 @@ class NoneOutput(object):
     def rawdump(self, data):
         pass
 
-    def print_cert(self, cert, km=GreenPassKeyManager(),
+    def print_cert(self, cert, kmg=GreenPassKeyManager(),
                    cachedir='', language=''):
         pass
 
