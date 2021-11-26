@@ -293,6 +293,7 @@ class DE_GreenPassKeyManager(Localized_GreenPassKeyManager):
     def get_date_format():
         return "{}datum"
 
+
 class EN_GreenPassKeyManager(Localized_GreenPassKeyManager):
     def __init__(self):
         """English localized greenpass strings"""
@@ -347,12 +348,12 @@ class EN_GreenPassKeyManager(Localized_GreenPassKeyManager):
     def get_date_format():
         return "{} Date"
 
+
 class GreenPassKeyManager(object):
     def __init__(self):
         """Dispatch the localized key values"""
 
-    @staticmethod
-    def get_localization(language="en"):
+    def get_localization(self, language="en"):
         if language == "it":
             return IT_GreenPassKeyManager()
         elif language == "de":

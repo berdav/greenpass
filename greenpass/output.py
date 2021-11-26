@@ -178,7 +178,7 @@ class OutputManager(NoneOutput):
                 )
 
     def get_hours_left(self, remaining_hours, km):
-        return "{:.0f} {} {} ({} {})".format(
+        return "{:.0f} {} ({} {})".format(
                     remaining_hours,
                     km.get_hours_left()[1],
                     int(remaining_hours / 24),
@@ -335,7 +335,7 @@ class OutputManager(NoneOutput):
 
     def print_cert(self, cert, kmg=GreenPassKeyManager(),
                    cachedir='', language="en"):
-        km =  kmg.get_localization(language)
+        km = kmg.get_localization(language)
 
         self._print_common_fields(cert, km, cachedir)
 
