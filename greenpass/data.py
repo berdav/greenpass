@@ -305,9 +305,10 @@ class GreenPassKeyManager(object):
             return DE_GreenPassKeyManager()
         else:
             return EN_GreenPassKeyManager()
+        return self.get_default()
 
     def get_default(self):
-        return self.get_localization()
+        return self.get_localization(language="en")
 
 
 # Vaccine names

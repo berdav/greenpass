@@ -9,7 +9,7 @@ RECOVERYDIR="tests/data/private/recovery"
 get_date() {
 	T="$1"
 	shift
-	"$GP" $@ --no-color |
+	"$GP" $@ --language en --no-color |
 		awk "/$T/{printf(\"%sT%s\\n\", \$3, \$4)}" ||
 		true
 }

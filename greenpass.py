@@ -104,7 +104,6 @@ def setup_argparse():
                         help="Do not print anything")
 
     parser.add_argument("--language",
-                        default="en",
                         help="Select the language, use two letter code")
 
     return parser.parse_args()
@@ -145,6 +144,10 @@ def get_filetype(args):
     return (path, filetype)
 
 
+def get_language(lang):
+    return lang.split("_")[0]
+
+
 def main():
     # Get the arguments
     args = setup_argparse()
@@ -154,6 +157,10 @@ def main():
     colored = init_colors(args.no_color)
 
     sm = SettingsManager(cachedir, args.recovery_expiration)
+
+    language = get_language(os.environ["LANG"])
+    if args.language is not None:
+        language = args.language
 
     if args.at_date is not None:
         sm.set_at_date(args.at_date)
@@ -200,7 +207,7 @@ def main():
     res = logic.verify_certificate(cert, sm, cup,
                                    enable_blocklist=not args.no_block_list)
 
-    out.print_cert(cert, cachedir=cachedir, language=args.language)
+    out.print_cert(cert, cachedir=cachedir, language=language)
     out.dump()
 
     # Unix return code is inverted
