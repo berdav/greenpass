@@ -174,7 +174,7 @@ def main():
 
     if args.settings:
         out = om(colored)
-        out.dump_settings(sm)
+        out.dump_settings(sm, enable_blocklist=not args.no_block_list)
         return 1
 
     data = InputTransformer(path, filetype).get_data()

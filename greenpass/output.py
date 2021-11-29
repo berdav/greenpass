@@ -198,40 +198,62 @@ class OutputManager(NoneOutput):
     def dump(self, file=sys.stdout):
         print(self.out, file=file)
 
-    def dump_settings(self, sm):
-        print("Tests")
-        for el in sm.test.items():
-            print("  {} not before: {:4d} hours not after: {:4d} hours".format(
-                self.colored("{:25s}".format(el[0]), "blue"),
-                el[1]["start_hours"],
-                el[1]["end_hours"])
+    def settings_time(self, title, start_hours, end_hours):
+        self.out += (
+            "  {} not before: {:4d} hours not after: {:4d} hours".format(
+                self.colored("{:12s}".format(title), "blue"),
+                start_hours,
+                end_hours
             )
-
-        print("\nCertifications")
-        print("  {} not before: {:4d} days  not after: {:4d} days".format(
-            self.colored("{:25s}".format("recovery"), "blue"),
-            sm.recovery["start_day"],
-            sm.recovery["end_day"])
         )
+        self.out += "\n"
 
-        print("\nVaccines")
+    def settings_category(self, category):
+        self.out += category
+        self.out += "\n"
+
+    def settings_end_category(self):
+        self.out += "\n"
+
+    def settings_add_blocked(self, name):
+        self.out += "  {}\n".format(name)
+
+    def dump_settings(self, sm, enable_blocklist=True):
+        self.settings_category("Test")
+        for el in sm.test.items():
+            self.settings_time(
+                el[0],
+                el[1]["start_hours"],
+                el[1]["end_hours"]
+            )
+        self.settings_end_category()
+
+        self.settings_category("Certifications")
+        self.settings_time(
+            "recovery",
+            sm.recovery["start_day"],
+            sm.recovery["end_day"]
+        )
+        self.settings_end_category()
+
+        self.settings_category("Vaccines")
         for vac in sm.vaccines.items():
             for el in vac[1].items():
-                print((
-                    "  {} {} not before: {:4d} days  "
-                    "not after: {:4d} days"
-                ).format(
-                    self.colored("{:12s}".format(el[0]), "blue"),
+                self.settings_time(
+                    "{:12s} ".format(el[0]) +
                     self.colored("{:20s}".format(
                         Vaccine(vac[0]).get_pretty_name()
                     ), "yellow"),
                     el[1]["start_day"], el[1]["end_day"]
-                ))
+                )
+        self.settings_end_category()
 
-        print("\nBlocked Pass IDs")
-        for gp in sm.blocklist:
-            print("  {}".format(gp))
-        print()
+        if enable_blocklist:
+            self.settings_category("Blocked Pass IDs")
+            for gp in sm.blocklist:
+                self.settings_add_blocked(gp)
+            self.settings_end_category()
+        self.dump()
 
     def dump_cose(self, phdr, uhdr, signature):
         print(self.colored("PHDR:", "green"), phdr)
@@ -380,3 +402,4 @@ class OutputManager(NoneOutput):
             km.get_verified()[1],
             km.get_key("_"+str(cert.get_verified()))[1]
         )
+
