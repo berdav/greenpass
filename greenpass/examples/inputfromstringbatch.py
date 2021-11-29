@@ -26,13 +26,13 @@ from greenpass.output import NoneOutput
 if __name__ == "__main__":
     out = True
     sm = SettingsManager('')
-    om = NoneOutput()
     logic = LogicManager('')
     cup = CertificateUpdater()
 
     data = sys.stdin.read().encode()
     gpp = GreenPassParser(data)
-    res = logic.verify_certificate(om, gpp, sm, cup)
+    cert = gpp.get_certificate()
+    res = logic.verify_certificate(cert, sm, cup)
 
     if res:
         print("[+] Valid")

@@ -32,7 +32,10 @@ if __name__ == "__main__":
 
     data = sys.stdin.read().encode()
     gpp = GreenPassParser(data)
-    res = logic.verify_certificate(om, gpp, sm, cup)
+    cert = gpp.get_certificate()
+    res = logic.verify_certificate(cert, sm, cup)
+
+    om.print_cert(cert)
     om.dump()
 
     if res:

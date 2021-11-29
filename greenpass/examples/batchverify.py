@@ -34,7 +34,8 @@ if __name__ == "__main__":
         try:
             data = InputTransformer(i, 'png').get_data()
             gpp = GreenPassParser(data)
-            res = logic.verify_certificate(om, gpp, sm, cup)
+            cert = gpp.get_certificate()
+            res = logic.verify_certificate(cert, sm, cup)
         except Exception:
             res = False
         if res:
