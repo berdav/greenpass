@@ -21,7 +21,6 @@ import sys
 from greenpass.logic import GreenPassParser, LogicManager
 from greenpass.settings import SettingsManager
 from greenpass.api import CertificateUpdater
-from greenpass.output import NoneOutput
 
 if __name__ == "__main__":
     out = True
