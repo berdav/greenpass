@@ -198,12 +198,11 @@ class OutputManager(NoneOutput):
     def dump(self, file=sys.stdout):
         print(self.out, file=file)
 
-    def settings_time(self, title, start_hours, end_hours):
+    def settings_time(self, title, unit, start, end):
         self.out += (
-            "  {} not before: {:4d} hours not after: {:4d} hours".format(
+            "  {} not before: {:4d} {} not after: {:4d} {}".format(
                 self.colored("{:12s}".format(title), "blue"),
-                start_hours,
-                end_hours
+                start, unit, end, unit
             )
         )
         self.out += "\n"
@@ -223,6 +222,7 @@ class OutputManager(NoneOutput):
         for el in sm.test.items():
             self.settings_time(
                 el[0],
+                "hours",
                 el[1]["start_hours"],
                 el[1]["end_hours"]
             )
@@ -231,6 +231,7 @@ class OutputManager(NoneOutput):
         self.settings_category("Certifications")
         self.settings_time(
             "recovery",
+            "days",
             sm.recovery["start_day"],
             sm.recovery["end_day"]
         )
@@ -244,6 +245,7 @@ class OutputManager(NoneOutput):
                     self.colored("{:20s}".format(
                         Vaccine(vac[0]).get_pretty_name()
                     ), "yellow"),
+                    "days",
                     el[1]["start_day"], el[1]["end_day"]
                 )
         self.settings_end_category()
