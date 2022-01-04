@@ -612,8 +612,10 @@ class LogicManager(object):
 
         # Check recovery validity
         if certificate_type == "recovery":
+            # TODO: implement pv recovery when available
+            rtype = "default"
             hours_to_valid, remaining_hours = sm.get_recovery_remaining_time(
-                recovery_from, recovery_until
+                rtype, recovery_from, recovery_until
             )
 
         if hours_to_valid is not None and remaining_hours is not None:

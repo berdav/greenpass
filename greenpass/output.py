@@ -208,11 +208,16 @@ class OutputManager(NoneOutput):
             )
 
         print("\nCertifications")
-        print("  {} not before: {:4d} days  not after: {:4d} days".format(
-            self.colored("{:25s}".format("recovery"), "blue"),
-            sm.recovery["start_day"],
-            sm.recovery["end_day"])
-        )
+        for rtype in ( "default", "pv" ):
+            rstring = "recovery"
+            if rtype == "pv":
+                rstring = "recovery+vaccine"
+
+            print("  {} not before: {:4d} days  not after: {:4d} days".format(
+                self.colored("{:25s}".format(rstring), "blue"),
+                sm.recovery[rtype]["start_day"],
+                sm.recovery[rtype]["end_day"])
+            )
 
         print("\nVaccines")
         for vac in sm.vaccines.items():
@@ -336,6 +341,15 @@ class OutputManager(NoneOutput):
     def print_cert(self, cert, kmg=GreenPassKeyManager(),
                    cachedir='', language="en"):
         km = kmg.get_localization(language)
+
+        # TODO: remove when recovery+vaccine logic is implemented
+        if cert.get_type() == "recovery":
+            self.add_general_info_warning(
+                "",
+                "\n[ WARNING ] "
+                "The Recovery+Vaccine logic is currently not implemented."
+                "see https://github.com/berdav/greenpass/issues/37"
+            )
 
         self._print_common_fields(cert, km, cachedir)
 

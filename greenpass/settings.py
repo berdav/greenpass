@@ -112,10 +112,17 @@ class SettingsManager(object):
     def dispatch_recovery(self, setting):
         field_name = setting["name"]
         field_value = setting["value"]
+
+        # Normal recovery
+        rtarget = self.recovery["default"]
+        # Recovery after vaccine
+        if "recovery_pv_" in field_name:
+            rtarget = self.recovery["pv"]
+
         if "start_day" in field_name:
-            self.recovery["start_day"] = int(field_value)
+            rtarget["start_day"] = int(field_value)
         elif "end_day" in field_name:
-            self.recovery["end_day"] = int(field_value)
+            rtarget["end_day"] = int(field_value)
 
     def dispatch_setting(self, setting):
         field_name = setting["name"]
@@ -139,7 +146,10 @@ class SettingsManager(object):
             sys.exit(1)
 
         self.vaccines = {}
-        self.recovery = {}
+        self.recovery = {
+            "default": {},
+            "pv": {}
+        }
         self.test = {
             "molecular": {},
             "rapid": {}
@@ -196,8 +206,9 @@ class SettingsManager(object):
 
     # Return the time that a recovery certification is still valid, negative
     # time if expired
-    def get_recovery_remaining_time(self, recovery_from, recovery_until):
-        days = self.recovery
+    def get_recovery_remaining_time(self, rtype,
+                                    recovery_from, recovery_until):
+        days = self.recovery[rtype]
 
         try:
             seconds_since_recovery = (
