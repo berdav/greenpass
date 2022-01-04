@@ -6,4 +6,5 @@ tests/data/private/test/*
 tests/data/private/recovery/*
 tests/data/private/vaccine/*
 .coverage
+coverage.xml
 htmlcov

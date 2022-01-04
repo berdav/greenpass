@@ -1,5 +1,6 @@
 #!/bin/bash
 
+COVERAGE=false
 GP="./greenpass.py"
 DEBUG="${1:-false}"
 OUT=/dev/null
@@ -7,6 +8,7 @@ if test "x$DEBUG" = "xtrue"; then
 	OUT=/dev/stdout
 fi
 if test "x$DEBUG" = "xcoverage"; then
+	COVERAGE=true
 	GP="tools/coverage.sh"
 	OUT=/dev/stdout
 	python3-coverage erase
@@ -70,3 +72,7 @@ for t in ${TESTS[@]}; do
 	"$t" || error_exit "$t"
 done
 echo "All tests passed"
+
+if "$COVERAGE"; then
+	python3-coverage xml
+fi
