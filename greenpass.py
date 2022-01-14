@@ -27,6 +27,7 @@ from greenpass.settings import SettingsManager
 import os
 import sys
 import shutil
+import locale
 import argparse
 import platform
 import colorama
@@ -187,7 +188,7 @@ def main():
 
     sm = SettingsManager(cachedir, args.recovery_expiration)
 
-    language = get_language(os.environ["LANG"])
+    language = get_language(locale.getlocale()[0])
     if args.language is not None:
         language = args.language
 
