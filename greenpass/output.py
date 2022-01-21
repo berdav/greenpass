@@ -287,7 +287,7 @@ class OutputManager(NoneOutput):
         )
 
     def _print_vaccine_fields(self, cert, km, cachedir):
-        if cert.get_dose_number() == cert.get_total_doses():
+        if cert.get_dose_number() >= cert.get_total_doses():
             printfun = self.add_cert_info_ok
         else:
             printfun = self.add_cert_info_warning

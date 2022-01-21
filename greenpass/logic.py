@@ -607,7 +607,7 @@ class LogicManager(object):
         # Check vaccine validity
         if certificate_type == "vaccine":
             hours_to_valid, remaining_hours = sm.get_vaccine_remaining_time(
-                vaccinedate, vaccine, dn == sd
+                vaccinedate, vaccine, dn >= sd
             )
 
         # Check recovery validity
