@@ -351,6 +351,18 @@ class OutputManager(NoneOutput):
                 "see https://github.com/berdav/greenpass/issues/37"
             )
 
+        # Print warning if the certificate contains non base45 chars
+        if cert.get_parent().not_completely_base45:
+            self.add_general_info_warning(
+                "",
+                "\n[ WARNING ] "
+                "This certificate can generate problems with base45 decoders"
+                "\n            "
+                "it contains the following non base45 characters"
+            )
+            for c in cert.get_parent().not_base45_chars:
+                self.add_general_info_warning("            "+repr(c), "")
+
         self._print_common_fields(cert, km, cachedir)
 
         hours_to_valid = cert.get_hours_to_valid()
