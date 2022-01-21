@@ -300,6 +300,9 @@ class Certificate(object):
     def set_kid(self, val):
         self.kid = val
 
+    def get_parent(self):
+        return self.parent
+
     def set_parent(self, p):
         self.parent = p
 
@@ -352,14 +355,36 @@ class Certificate(object):
             self.set_info(_type, key, val)
 
 
+def _iscompletelybase45compatible(data):
+    s = data.decode()
+    return all(c in base45.BASE45_CHARSET for c in s)
+
+
+def _getnonbase45chars(data):
+    s = data.decode()
+    out = set()
+    for c in s:
+        if c not in base45.BASE45_CHARSET:
+            out.add(c)
+    return out
+
+
 # Parse a green pass file
 class GreenPassParser(object):
     def __init__(self, certification, km=GreenPassKeyManager()):
         """Parse the certificate and create a Certificate class."""
         k = km.get_default()
         self.k = k
+
+        unstripped_data = b":".join(certification.split(b":")[1::])
         # Remove the initial HC1: part and decode the certificate
         data = b":".join(certification.strip().split(b":")[1::])
+
+        self.not_completely_base45 = not _iscompletelybase45compatible(
+            unstripped_data
+        )
+        self.not_base45_chars = _getnonbase45chars(unstripped_data)
+
         decoded = base45.b45decode(data)
         uncompressed = zlib.decompress(decoded)
 
