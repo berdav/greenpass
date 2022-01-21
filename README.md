@@ -145,6 +145,11 @@ Print the raw content (JSON) of the certificate
 Disable colored output.
 
 ```bash
+--force-color
+```
+Force colored output. (useful in CMD on Windows)
+
+```bash
 --no-cache
 ```
 Disable cache, download everything without saving it.

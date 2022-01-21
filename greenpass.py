@@ -27,7 +27,9 @@ from greenpass.settings import SettingsManager
 import os
 import sys
 import shutil
+import locale
 import argparse
+import platform
 import colorama
 import functools
 
@@ -65,9 +67,14 @@ def setup_argparse():
                         action="store_true",
                         help="print raw data of certificate in json format")
 
+    # On windows disable colors by default (CMD currently do not parse)
     parser.add_argument("--no-color",
                         action="store_true",
                         help="Disable color output")
+
+    parser.add_argument("--force-color",
+                        action="store_true",
+                        help="Force color output")
 
     parser.add_argument("--no-cache",
                         action="store_true",
@@ -119,15 +126,38 @@ def manage_cache(cachedir, no_cache, clear_cache):
     return outcachedir
 
 
-def init_colors(no_color):
-    if not no_color:
-        colorama.init()
-        from termcolor import colored
+def _setup_colors():
+    colorama.init()
+    from termcolor import colored
+    return colored
+
+
+def _disable_colors():
+    def _uncolor(x, y):
+        return x
+    return _uncolor
+
+
+def _is_windows():
+    return platform.system == "Windows"
+
+
+def init_colors(no_color, force_color):
+    if _is_windows():
+        # On windows, CMD do not parse colors, disable them by default
+        no_color = True
+
+        # On other systems, terminals usually parse colors, use the
+        # passed settings
+
+    if force_color:
+        # If Forced, use colored output
+        colored = _setup_colors()
+    elif no_color:
+        # If selected no color do not use colors
+        colored = _disable_colors()
     else:
-        # Disable colors
-        def _uncolor(x, y):
-            return x
-        colored = _uncolor
+        colored = _setup_colors()
 
     return colored
 
@@ -154,11 +184,11 @@ def main():
     # Configure the cache directory
     cachedir = manage_cache(args.cachedir, args.no_cache, args.clear_cache)
     # Configure colored output
-    colored = init_colors(args.no_color)
+    colored = init_colors(args.no_color, args.force_color)
 
     sm = SettingsManager(cachedir, args.recovery_expiration)
 
-    language = get_language(os.environ["LANG"])
+    language = get_language(locale.getdefaultlocale()[0])
     if args.language is not None:
         language = args.language
 
