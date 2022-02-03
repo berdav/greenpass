@@ -67,18 +67,41 @@ class SettingsManager(object):
             "not_complete": {
                 "start_day": -1,
                 "end_day": -1
+            },
+
+            "booster_IT": {
+                "start_day": -1,
+                "end_day": -1
+            },
+            "booster_NOT_IT": {
+                "start_day": -1,
+                "end_day": -1
+            },
+
+            "complete_IT": {
+                "start_day": -1,
+                "end_day": -1
+            },
+            "complete_NOT_IT": {
+                "start_day": -1,
+                "end_day": -1
             }
         }
         field_name = setting["name"]
         field_type = setting["type"]
         field_value = setting["value"]
-        vtype_regex = r"((?:not_)?complete)"
+        vtype_regex = r"((?:(?:not_)?complete|booster)(?:_(?:NOT_)?IT)?)"
         daytype_regex = r"((?:start|end)_day)"
         if self.vaccines.get(field_type, None) is None:
             self.vaccines[field_type] = vaccine_template
 
         vtype_re = re.search(vtype_regex, field_name)
+        if vtype_re == None:
+            return
+
         daytype_re = re.search(daytype_regex, field_name)
+        if daytype_re == None:
+            return
 
         vtype = vtype_re.group(1)
         daytype = daytype_re.group(1)
@@ -118,6 +141,10 @@ class SettingsManager(object):
         # Recovery after vaccine
         if "recovery_pv_" in field_name:
             rtarget = self.recovery["pv"]
+        elif "NOT_IT" in field_name:
+            rtarget = self.recovery["NOT_IT"]
+        elif "_IT" in field_name:
+            rtarget = self.recovery["IT"]
 
         if "start_day" in field_name:
             rtarget["start_day"] = int(field_value)
@@ -148,7 +175,9 @@ class SettingsManager(object):
         self.vaccines = {}
         self.recovery = {
             "default": {},
-            "pv": {}
+            "pv": {},
+            "NOT_IT": {},
+            "IT": {}
         }
         self.test = {
             "molecular": {},

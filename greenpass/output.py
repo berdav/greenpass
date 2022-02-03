@@ -208,10 +208,14 @@ class OutputManager(NoneOutput):
             )
 
         print("\nCertifications")
-        for rtype in ( "default", "pv" ):
+        for rtype in ( "default", "pv", "IT", "NOT_IT" ):
             rstring = "recovery"
             if rtype == "pv":
                 rstring = "recovery+vaccine"
+            elif rtype == "IT":
+                rstring = "recovery generic IT"
+            elif rtype == "NOT_IT":
+                rstring = "recovery generic NOT IT"
 
             print("  {} not before: {:4d} days  not after: {:4d} days".format(
                 self.colored("{:25s}".format(rstring), "blue"),
@@ -222,11 +226,13 @@ class OutputManager(NoneOutput):
         print("\nVaccines")
         for vac in sm.vaccines.items():
             for el in vac[1].items():
+                if el[1]["start_day"] == -1 or el[1]["end_day"] == -1:
+                    continue
                 print((
                     "  {} {} not before: {:4d} days  "
                     "not after: {:4d} days"
                 ).format(
-                    self.colored("{:12s}".format(el[0]), "blue"),
+                    self.colored("{:15s}".format(el[0]), "blue"),
                     self.colored("{:20s}".format(
                         Vaccine(vac[0]).get_pretty_name()
                     ), "yellow"),
