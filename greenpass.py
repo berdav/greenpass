@@ -192,9 +192,7 @@ def main():
 
     sm = SettingsManager(cachedir, args.recovery_expiration)
 
-    language = get_language()
-    if args.language is not None:
-        language = args.language
+    language = get_language() if args.language is None else args.language
 
     if args.at_date is not None:
         sm.set_at_date(args.at_date)
