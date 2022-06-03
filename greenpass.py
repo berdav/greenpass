@@ -174,8 +174,12 @@ def get_filetype(args):
     return (path, filetype)
 
 
-def get_language(lang):
-    return lang.split("_")[0]
+def get_language():
+    loc = locale.getdefaultlocale()[0]
+    if loc is None:
+        # Fallback to English
+        return "en"
+    return loc.split("_")[0]
 
 
 def main():
@@ -188,9 +192,7 @@ def main():
 
     sm = SettingsManager(cachedir, args.recovery_expiration)
 
-    language = get_language(locale.getdefaultlocale()[0])
-    if args.language is not None:
-        language = args.language
+    language = get_language() if args.language is None else args.language
 
     if args.at_date is not None:
         sm.set_at_date(args.at_date)
