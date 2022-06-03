@@ -175,6 +175,8 @@ def get_filetype(args):
 
 
 def get_language(lang):
+    if lang is None:
+        return "en"
     return lang.split("_")[0]
 
 
